@@ -5,19 +5,35 @@ import { revalidatePath } from 'next/cache';
 
 const redis = new Redis(process.env.STORAGE_REDIS_URL);
 
+// Fungsi pembantu untuk mengamankan parsing data JSON dari Redis
+function parseTodoItem(item, index) {
+  if (!item) return null;
+  if (typeof item === 'object') return item;
+  try {
+    return JSON.parse(item);
+  } catch {
+    // Jika data berupa string biasa (data lama), ubah otomatis jadi format objek valid
+    return {
+      id: `legacy-${index}-${Date.now()}`,
+      name: item,
+      description: 'Data migrasi otomatis dari versi sebelumnya',
+      assignedDate: new Date().toISOString().split('T')[0],
+      deadlineDate: new Date().toISOString().split('T')[0],
+      deadlineTime: '23:59',
+      category: 'Individu',
+      priority: '🟡 Penting Tapi Santai (Medium)',
+      completed: false,
+    };
+  }
+}
+
 export default async function Page({ searchParams }) {
   const resolvedParams = await searchParams;
   const editId = resolvedParams?.edit;
 
-  // 1. Mengambil data dari Redis
+  // 1. Mengambil data dari Redis dengan aman
   const rawTodos = await redis.lrange('todo-list', 0, -1);
-  const todos = rawTodos.map((item, index) => {
-    try {
-      return JSON.parse(item);
-    } catch {
-      return { id: `legacy-${index}`, name: item, description: '-', category: 'Individu', priority: 'Normal', completed: false };
-    }
-  });
+  const todos = rawTodos.map((item, index) => parseTodoItem(item, index)).filter(Boolean);
 
   const taskToEdit = editId ? todos.find(t => t.id === editId) : null;
 
@@ -48,7 +64,7 @@ export default async function Page({ searchParams }) {
     if (taskData.name) {
       const dbClient = new Redis(process.env.STORAGE_REDIS_URL);
       const currentRaw = await dbClient.lrange('todo-list', 0, -1);
-      let currentTodos = currentRaw.map(i => JSON.parse(i));
+      let currentTodos = currentRaw.map((i, idx) => parseTodoItem(i, idx)).filter(Boolean);
 
       if (idToEdit) {
         currentTodos = currentTodos.map(t => t.id === idToEdit ? { ...taskData, completed: t.completed } : t);
@@ -71,7 +87,7 @@ export default async function Page({ searchParams }) {
     const idToDelete = formData.get('id');
     const dbClient = new Redis(process.env.STORAGE_REDIS_URL);
     const currentRaw = await dbClient.lrange('todo-list', 0, -1);
-    const currentTodos = currentRaw.map(i => JSON.parse(i)).filter(t => t.id !== idToDelete);
+    const currentTodos = currentRaw.map((i, idx) => parseTodoItem(i, idx)).filter(Boolean).filter(t => t.id !== idToDelete);
 
     await dbClient.del('todo-list');
     if (currentTodos.length > 0) {
@@ -87,7 +103,7 @@ export default async function Page({ searchParams }) {
     const idToToggle = formData.get('id');
     const dbClient = new Redis(process.env.STORAGE_REDIS_URL);
     const currentRaw = await dbClient.lrange('todo-list', 0, -1);
-    const currentTodos = currentRaw.map(i => JSON.parse(i)).map(t => {
+    const currentTodos = currentRaw.map((i, idx) => parseTodoItem(i, idx)).filter(Boolean).map(t => {
       if (t.id === idToToggle) {
         return { ...t, completed: !t.completed };
       }
