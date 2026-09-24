@@ -1,1 +1,535 @@
-Catatan Tugas Kuliah
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catatan Tugas Kuliah</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --warning: #f59e0b;
+            --warning-hover: #d97706;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 25px;
+        }
+
+        .form-card, .toolbar-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+        }
+
+        textarea {
+            resize: vertical;
+            height: 70px;
+        }
+
+        button.btn-add {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 5px;
+        }
+
+        button.btn-add:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button.btn-edit-mode {
+            background-color: var(--warning) !important;
+        }
+        button.btn-edit-mode:hover {
+            background-color: var(--warning-hover) !important;
+        }
+
+        .toolbar-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-left: 5px solid var(--primary);
+            position: relative;
+            transition: opacity 0.2s;
+        }
+
+        .task-card.completed {
+            opacity: 0.6;
+            border-left-color: #cbd5e1;
+        }
+
+        .task-card.completed .task-title {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .course-badge {
+            background: #e0e7ff;
+            color: var(--primary);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .type-badge {
+            background: #f1f5f9;
+            color: var(--text-muted);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .task-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 5px 0;
+            color: var(--text-main);
+        }
+
+        .task-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            white-space: pre-line;
+        }
+
+        .task-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        button.btn-action {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+        }
+
+        .btn-toggle {
+            background-color: #e2e8f0;
+            color: var(--text-main);
+        }
+        .btn-toggle:hover { background-color: #cbd5e1; }
+
+        .btn-edit {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .btn-edit:hover { background-color: #fde68a; }
+
+        .btn-delete {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        .btn-delete:hover { background-color: #fecaca; }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 30px;
+            background: var(--card-bg);
+            border-radius: 12px;
+        }
+
+        #cancelEditBtn {
+            display: none;
+            width: 100%;
+            padding: 8px;
+            background-color: #cbd5e1;
+            color: #334155;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+        #cancelEditBtn:hover {
+            background-color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📝 Catatan Tugas Kuliah</h2>
+
+    <!-- Form Input / Edit Tugas -->
+    <div class="form-card">
+        <input type="hidden" id="editIndex" value="-1">
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Nama Mata Kuliah</label>
+                <input type="text" id="courseInput" placeholder="Contoh: Analisis Multivariat">
+            </div>
+            <div class="form-group">
+                <label>Judul Tugas</label>
+                <input type="text" id="titleInput" placeholder="Contoh: Laporan Praktikum 1">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+            <label>Deskripsi Tugas</label>
+            <textarea id="descInput" placeholder="Tulis detail instruksi atau catatan tugas di sini..."></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Tanggal Diberikan</label>
+                <input type="date" id="startDateInput">
+            </div>
+            <div class="form-group">
+                <label>Deadline Tugas</label>
+                <input type="date" id="dueDateInput">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+            <label>Tipe Tugas</label>
+            <select id="typeInput">
+                <option value="Individu">Individu</option>
+                <option value="Kelompok">Kelompok</option>
+            </select>
+        </div>
+
+        <button id="submitBtn" class="btn-add" onclick="saveTask()">Tambah Tugas</button>
+        <button id="cancelEditBtn" onclick="resetForm()">Batal Edit</button>
+    </div>
+
+    <!-- Toolbar: Pencarian, Filter, & Sorting -->
+    <div class="toolbar-card">
+        <div class="form-group" style="margin-bottom: 0;">
+            <input type="text" id="searchInput" placeholder="🔍 Cari berdasarkan judul, mata kuliah, atau deskripsi..." oninput="renderTasks()">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Filter Tipe</label>
+                <select id="filterType" onchange="renderTasks()">
+                    <option value="Semua">Semua Tipe</option>
+                    <option value="Individu">Individu</option>
+                    <option value="Kelompok">Kelompok</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Urutkan Berdasarkan</label>
+                <select id="sortBy" onchange="renderTasks()">
+                    <option value="deadline">Deadline Terdekat ⏳</option>
+                    <option value="newest">Ditambahkan Terbaru 🕒</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daftar Tugas -->
+    <div class="task-list" id="taskList"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        setDefaultDates();
+        renderTasks();
+    });
+
+    function setDefaultDates() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("startDateInput").value = today;
+    }
+
+    function saveTask() {
+        const course = document.getElementById("courseInput").value.trim();
+        const title = document.getElementById("titleInput").value.trim();
+        const desc = document.getElementById("descInput").value.trim();
+        const startDate = document.getElementById("startDateInput").value;
+        const dueDate = document.getElementById("dueDateInput").value;
+        const type = document.getElementById("typeInput").value;
+        const editIndex = parseInt(document.getElementById("editIndex").value);
+
+        if (course === "" || title === "") {
+            alert("Nama Mata Kuliah dan Judul Tugas wajib diisi!");
+            return;
+        }
+
+        let tasks = getTasks();
+
+        if (editIndex === -1) {
+            // Tambah tugas baru
+            const newTask = {
+                course,
+                title,
+                desc,
+                startDate,
+                dueDate,
+                type,
+                completed: false,
+                createdAt: Date.now()
+            };
+            tasks.push(newTask);
+        } else {
+            // Simpan perubahan tugas yang sedang diedit
+            tasks[editIndex].course = course;
+            tasks[editIndex].title = title;
+            tasks[editIndex].desc = desc;
+            tasks[editIndex].startDate = startDate;
+            tasks[editIndex].dueDate = dueDate;
+            tasks[editIndex].type = type;
+        }
+
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        resetForm();
+        renderTasks();
+    }
+
+    function getTasks() {
+        return JSON.parse(localStorage.getItem("tasks")) || [];
+    }
+
+    function renderTasks() {
+        const taskList = document.getElementById("taskList");
+        taskList.innerHTML = "";
+        let tasks = getTasks();
+
+        const searchQuery = document.getElementById("searchInput").value.toLowerCase();
+        const filterType = document.getElementById("filterType").value;
+        const sortBy = document.getElementById("sortBy").value;
+
+        // Map tiap task dengan indeks aslinya sebelum difilter
+        let tasksWithIndex = tasks.map((task, index) => ({ ...task, originalIndex: index }));
+
+        // 1. Proses Pencarian & Filter
+        tasksWithIndex = tasksWithIndex.filter(task => {
+            const matchesSearch = task.title.toLowerCase().includes(searchQuery) ||
+                                  task.course.toLowerCase().includes(searchQuery) ||
+                                  (task.desc && task.desc.toLowerCase().includes(searchQuery));
+            const matchesType = (filterType === "Semua" || task.type === filterType);
+            return matchesSearch && matchesType;
+        });
+
+        // 2. Proses Sorting
+        tasksWithIndex.sort((a, b) => {
+            if (sortBy === "deadline") {
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            } else if (sortBy === "newest") {
+                return (b.createdAt || 0) - (a.createdAt || 0);
+            }
+            return 0;
+        });
+
+        if (tasksWithIndex.length === 0) {
+            taskList.innerHTML = `<div class="empty-state">Tidak ada tugas yang cocok atau ditemukan. 🔍</div>`;
+            return;
+        }
+
+        tasksWithIndex.forEach((task) => {
+            const card = document.createElement("div");
+            card.className = `task-card ${task.completed ? "completed" : ""}`;
+
+            card.innerHTML = `
+                <div class="task-header">
+                    <span class="course-badge">${escapeHtml(task.course)}</span>
+                    <span class="type-badge">${escapeHtml(task.type)}</span>
+                </div>
+                <div class="task-title">${escapeHtml(task.title)}</div>
+                <div class="task-desc">${escapeHtml(task.desc || "Tidak ada deskripsi.")}</div>
+                <div class="task-footer">
+                    <div>
+                        📅 Diberikan: <b>${task.startDate || "-"}</b> | ⏳ Deadline: <b style="color: ${isNearDeadline(task.dueDate) && !task.completed ? '#dc2626' : 'inherit'}">${task.dueDate || "Tidak ada"}</b>
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn-action btn-toggle" onclick="toggleTask(${task.originalIndex})">
+                            ${task.completed ? "Belum" : "Selesai"}
+                        </button>
+                        <button class="btn-action btn-edit" onclick="editTask(${task.originalIndex})">Edit</button>
+                        <button class="btn-action btn-delete" onclick="deleteTask(${task.originalIndex})">Hapus</button>
+                    </div>
+                </div>
+            `;
+            taskList.appendChild(card);
+        });
+    }
+
+    function editTask(index) {
+        const tasks = getTasks();
+        const task = tasks[index];
+
+        // Masukkan data lama ke form input
+        document.getElementById("courseInput").value = task.course;
+        document.getElementById("titleInput").value = task.title;
+        document.getElementById("descInput").value = task.desc || "";
+        document.getElementById("startDateInput").value = task.startDate || "";
+        document.getElementById("dueDateInput").value = task.dueDate || "";
+        document.getElementById("typeInput").value = task.type;
+        document.getElementById("editIndex").value = index;
+
+        // Ubah tampilan tombol utama jadi mode edit
+        const submitBtn = document.getElementById("submitBtn");
+        submitBtn.textContent = "Simpan Perubahan";
+        submitBtn.classList.add("btn-edit-mode");
+        document.getElementById("cancelEditBtn").style.display = "block";
+
+        // Scroll otomatis ke atas agar form terlihat
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+        document.getElementById("courseInput").value = "";
+        document.getElementById("titleInput").value = "";
+        document.getElementById("descInput").value = "";
+        setDefaultDates();
+        document.getElementById("typeInput").value = "Individu";
+        document.getElementById("editIndex").value = "-1";
+
+        const submitBtn = document.getElementById("submitBtn");
+        submitBtn.textContent = "Tambah Tugas";
+        submitBtn.classList.remove("btn-edit-mode");
+        document.getElementById("cancelEditBtn").style.display = "none";
+    }
+
+    function toggleTask(index) {
+        const tasks = getTasks();
+        tasks[index].completed = !tasks[index].completed;
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        renderTasks();
+    }
+
+    function deleteTask(index) {
+        if (confirm("Yakin ingin menghapus tugas ini?")) {
+            const tasks = getTasks();
+            tasks.splice(index, 1);
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            renderTasks();
+            resetForm();
+        }
+    }
+
+    function isNearDeadline(dueDateStr) {
+        if (!dueDateStr) return false;
+        const today = new Date();
+        const dueDate = new Date(dueDateStr);
+        const diffTime = dueDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= 2 && diffDays >= 0;
+    }
+
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+</script>
+
+</body>
+</html>
