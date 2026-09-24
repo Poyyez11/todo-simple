@@ -5,27 +5,36 @@ import { revalidatePath } from 'next/cache';
 
 const redis = new Redis(process.env.STORAGE_REDIS_URL);
 
-export default async function Page() {
-  // 1. Mengambil data tugas dari Redis dan mengubahnya dari JSON string ke Object
+export default async function Page({ searchParams }) {
+  const resolvedParams = await searchParams;
+  const editId = resolvedParams?.edit;
+
+  // 1. Mengambil data dari Redis
   const rawTodos = await redis.lrange('todo-list', 0, -1);
-  const todos = rawTodos.map((item) => {
+  const todos = rawTodos.map((item, index) => {
     try {
       return JSON.parse(item);
     } catch {
-      return { name: item, description: '-', category: 'Individu', priority: 'Normal' }; // fallback untuk data lama
+      return { id: `legacy-${index}`, name: item, description: '-', category: 'Individu', priority: 'Normal', completed: false };
     }
   });
 
-  const totalTugas = todos.length;
-  const tugasKelompok = todos.filter(t => t.category === 'Kelompok').length;
-  const tugasUrgent = todos.filter(t => t.priority?.includes('Mendesak') || t.priority?.includes('Darurat')).length;
+  const taskToEdit = editId ? todos.find(t => t.id === editId) : null;
 
-  // 2. Fungsi Server Action untuk menambah tugas dengan fitur lengkap
-  async function tambahTugas(formData) {
+  // Statistik Data
+  const totalTugas = todos.length;
+  const selesaiTugas = todos.filter(t => t.completed).length;
+  const tugasKelompok = todos.filter(t => t.category === 'Kelompok').length;
+  const tugasUrgent = todos.filter(t => t.priority?.includes('Darurat') || t.priority?.includes('Mendesak')).length;
+  const progressPersen = totalTugas > 0 ? Math.round((selesaiTugas / totalTugas) * 100) : 0;
+
+  // 2. Server Action: Tambah atau Update Tugas
+  async function handleSaveTask(formData) {
     'use server';
+    const idToEdit = formData.get('editId');
     
-    const newTask = {
-      id: Date.now().toString(),
+    const taskData = {
+      id: idToEdit || Date.now().toString(),
       name: formData.get('name'),
       description: formData.get('description'),
       assignedDate: formData.get('assignedDate'),
@@ -33,129 +42,243 @@ export default async function Page() {
       deadlineTime: formData.get('deadlineTime'),
       category: formData.get('category'),
       priority: formData.get('priority'),
+      completed: formData.get('completed') === 'true',
     };
-    
-    if (newTask.name) {
+
+    if (taskData.name) {
       const dbClient = new Redis(process.env.STORAGE_REDIS_URL);
-      await dbClient.rpush('todo-list', JSON.stringify(newTask));
+      const currentRaw = await dbClient.lrange('todo-list', 0, -1);
+      let currentTodos = currentRaw.map(i => JSON.parse(i));
+
+      if (idToEdit) {
+        currentTodos = currentTodos.map(t => t.id === idToEdit ? { ...taskData, completed: t.completed } : t);
+      } else {
+        currentTodos.push(taskData);
+      }
+
+      await dbClient.del('todo-list');
+      if (currentTodos.length > 0) {
+        const stringified = currentTodos.map(t => JSON.stringify(t));
+        await dbClient.rpush('todo-list', ...stringified);
+      }
       revalidatePath('/');
     }
   }
 
+  // 3. Server Action: Hapus Tugas
+  async function hapusTugas(formData) {
+    'use server';
+    const idToDelete = formData.get('id');
+    const dbClient = new Redis(process.env.STORAGE_REDIS_URL);
+    const currentRaw = await dbClient.lrange('todo-list', 0, -1);
+    const currentTodos = currentRaw.map(i => JSON.parse(i)).filter(t => t.id !== idToDelete);
+
+    await dbClient.del('todo-list');
+    if (currentTodos.length > 0) {
+      const stringified = currentTodos.map(t => JSON.stringify(t));
+      await dbClient.rpush('todo-list', ...stringified);
+    }
+    revalidatePath('/');
+  }
+
+  // 4. Server Action: Ubah Status Selesai / Belum
+  async function toggleStatus(formData) {
+    'use server';
+    const idToToggle = formData.get('id');
+    const dbClient = new Redis(process.env.STORAGE_REDIS_URL);
+    const currentRaw = await dbClient.lrange('todo-list', 0, -1);
+    const currentTodos = currentRaw.map(i => JSON.parse(i)).map(t => {
+      if (t.id === idToToggle) {
+        return { ...t, completed: !t.completed };
+      }
+      return t;
+    });
+
+    await dbClient.del('todo-list');
+    if (currentTodos.length > 0) {
+      const stringified = currentTodos.map(t => JSON.stringify(t));
+      await dbClient.rpush('todo-list', ...stringified);
+    }
+    revalidatePath('/');
+  }
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', fontFamily: 'sans-serif', padding: '20px 40px' }}>
-      {/* Header Navbar */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', background: '#fff', padding: '15px 25px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '22px', color: '#1e293b' }}>🎓 TaskEdu Pro</h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Kuliah Task Manager Cloud Database</p>
-        </div>
-      </header>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', color: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '30px 20px' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        
+        {/* Header Navbar */}
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '20px 30px', borderRadius: '16px', boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '26px', background: 'linear-gradient(to right, #818cf8, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              ⚡ TaskEdu Pro Ultra
+            </h1>
+            <p style={{ margin: '5px 0 0 0', fontSize: '13px', color: '#94a3b8' }}>Advanced Cloud Task Manager & Academic Planner</p>
+          </div>
+          <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', color: '#34d399', fontWeight: 'bold' }}>
+            ● Redis Cloud Connected
+          </div>
+        </header>
 
-      {/* Statistik Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '25px' }}>
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-          <p style={{ margin: '0 0 5px 0', color: '#64748b', fontSize: '14px' }}>Total Tugas</p>
-          <h2 style={{ margin: 0, color: '#0f172a' }}>{totalTugas}</h2>
+        {/* Statistik & Progres Bar */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '15px', marginBottom: '30px' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '20px', borderRadius: '14px' }}>
+            <p style={{ margin: '0 0 5px 0', color: '#94a3b8', fontSize: '13px' }}>Total Tugas</p>
+            <h2 style={{ margin: 0, fontSize: '28px', color: '#fff' }}>{totalTugas}</h2>
+          </div>
+          <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '20px', borderRadius: '14px' }}>
+            <p style={{ margin: '0 0 5px 0', color: '#94a3b8', fontSize: '13px' }}>Tugas Kelompok</p>
+            <h2 style={{ margin: 0, fontSize: '28px', color: '#818cf8' }}>{tugasKelompok}</h2>
+          </div>
+          <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '20px', borderRadius: '14px' }}>
+            <p style={{ margin: '0 0 5px 0', color: '#94a3b8', fontSize: '13px' }}>Prioritas Mendesak</p>
+            <h2 style={{ margin: 0, fontSize: '28px', color: '#f87171' }}>{tugasUrgent}</h2>
+          </div>
+          <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '20px', borderRadius: '14px' }}>
+            <p style={{ margin: '0 0 5px 0', color: '#94a3b8', fontSize: '13px' }}>Penyelesaian ({progressPersen}%)</p>
+            <div style={{ width: '100%', background: '#334155', height: '8px', borderRadius: '4px', marginTop: '10px', overflow: 'hidden' }}>
+              <div style={{ width: `${progressPersen}%`, background: 'linear-gradient(to right, #4f46e5, #06b6d4)', height: '100%', transition: 'width 0.4s ease' }}></div>
+            </div>
+          </div>
         </div>
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-          <p style={{ margin: '0 0 5px 0', color: '#64748b', fontSize: '14px' }}>Tugas Kelompok</p>
-          <h2 style={{ margin: 0, color: '#4f46e5' }}>{tugasKelompok}</h2>
-        </div>
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-          <p style={{ margin: '0 0 5px 0', color: '#64748b', fontSize: '14px' }}>Prioritas Mendesak</p>
-          <h2 style={{ margin: 0, color: '#ef4444' }}>{tugasUrgent}</h2>
-        </div>
-      </div>
 
-      {/* Form Input Tugas Powerful */}
-      <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
-        <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#1e293b' }}>✨ Tambah Tugas Baru</h3>
-        <form action={tambahTugas} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+        {/* Form Input / Edit Card */}
+        <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '30px', borderRadius: '16px', marginBottom: '35px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', color: '#f1f5f9' }}>
+              {taskToEdit ? '✏️ Edit Tugas Kuliah' : '✨ Tambah Tugas Baru'}
+            </h3>
+            {taskToEdit && (
+              <a href="/" style={{ fontSize: '12px', background: '#475569', color: '#fff', padding: '6px 12px', borderRadius: '6px', textDecoration: 'none' }}>
+                Batal Edit
+              </a>
+            )}
+          </div>
+
+          <form action={handleSaveTask} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+            <input type="hidden" name="editId" value={taskToEdit?.id || ''} />
+
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#cbd5e1' }}>Nama Tugas</label>
+              <input type="text" name="name" defaultValue={taskToEdit?.name || ''} placeholder="Contoh: Tugas Besar Web Programming" required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.2)', color: '#fff', outline: 'none' }} />
+            </div>
+
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#cbd5e1' }}>Deskripsi / Catatan Detail</label>
+              <textarea name="description" rows="2" defaultValue={taskToEdit?.description || ''} placeholder="Tautan meeting, pembagian tugas kelompok, atau instruksi dosen..." style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.2)', color: '#fff', outline: 'none' }}></textarea>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#cbd5e1' }}>Tanggal Diberikan</label>
+              <input type="date" name="assignedDate" defaultValue={taskToEdit?.assignedDate || ''} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.2)', color: '#fff', outline: 'none' }} />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#cbd5e1' }}>Kategori Tugas</label>
+              <select name="category" defaultValue={taskToEdit?.category || 'Individu'} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: '#1e293b', color: '#fff', outline: 'none' }}>
+                <option value="Individu">👤 Individu</option>
+                <option value="Kelompok">👥 Kelompok</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#cbd5e1' }}>Deadline Tanggal</label>
+              <input type="date" name="deadlineDate" defaultValue={taskToEdit?.deadlineDate || ''} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.2)', color: '#fff', outline: 'none' }} />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#cbd5e1' }}>Deadline Jam</label>
+              <input type="time" name="deadlineTime" defaultValue={taskToEdit?.deadlineTime || ''} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(0,0,0,0.2)', color: '#fff', outline: 'none' }} />
+            </div>
+
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#cbd5e1' }}>Tingkat Prioritas & Urgensi</label>
+              <select name="priority" defaultValue={taskToEdit?.priority || '🔴 Darurat & Penting'} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', background: '#1e293b', color: '#fff', outline: 'none' }}>
+                <option value="🔴 Darurat & Penting (High Urgency)">🔴 Darurat & Penting (High Urgency)</option>
+                <option value="🟡 Penting Tapi Santai (Medium)">🟡 Penting Tapi Santai (Medium)</option>
+                <option value="🟢 Bisa Ditunda / Opsional (Low)">🟢 Bisa Ditunda / Opsional (Low)</option>
+              </select>
+            </div>
+
+            <div style={{ gridColumn: 'span 2', marginTop: '10px' }}>
+              <button type="submit" style={{ width: '100%', padding: '14px', background: taskToEdit ? '#059669' : 'linear-gradient(to right, #4f46e5, #7c3aed)', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)' }}>
+                {taskToEdit ? 'Simpan Perubahan Tugas' : '🚀 Tambahkan Tugas ke Cloud'}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Daftar Tugas List */}
+        <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '30px', borderRadius: '16px' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#f1f5f9' }}>📋 Daftar Seluruh Tugas</h3>
           
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Nama Tugas</label>
-            <input type="text" name="name" placeholder="Contoh: Membuat Laporan Praktikum" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
-          </div>
-
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Deskripsi Tugas</label>
-            <textarea name="description" rows="2" placeholder="Catatan detail atau langkah pengerjaan tugas..." style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}></textarea>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Tanggal Diberikan</label>
-            <input type="date" name="assignedDate" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Kategori Tugas</label>
-            <select name="category" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: '#fff' }}>
-              <option value="Individu">👤 Individu</option>
-              <option value="Kelompok">👥 Kelompok</option>
-            </select>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Deadline Tanggal</label>
-            <input type="date" name="deadlineDate" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Deadline Jam</label>
-            <input type="time" name="deadlineTime" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
-          </div>
-
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Prioritas (Berdasarkan Urgensi & Deadline)</label>
-            <select name="priority" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', background: '#fff' }}>
-              <option value="🔴 Darurat & Penting (High Urgency)">🔴 Darurat & Penting (High Urgency)</option>
-              <option value="🟡 Penting Tapi Santai (Medium)">🟡 Penting Tapi Santai (Medium)</option>
-              <option value="🟢 Bisa Ditunda / Opsional (Low)">🟢 Bisa Ditunda / Opsional (Low)</option>
-            </select>
-          </div>
-
-          <div style={{ gridColumn: 'span 2', marginTop: '10px' }}>
-            <button type="submit" style={{ width: '100%', padding: '12px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}>
-              Simpan Tugas ke Cloud
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Daftar Tugas */}
-      <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-        <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#1e293b' }}>📋 Daftar Tugas Kuliah</h3>
-        {todos.length === 0 ? (
-          <p style={{ color: '#64748b', textAlign: 'center', padding: '20px 0' }}>Belum ada catatan tugas yang ditemukan.</p>
-        ) : (
-          <div style={{ display: 'grid', gap: '15px' }}>
-            {todos.map((task, index) => (
-              <div key={index} style={{ padding: '15px 20px', border: '1px solid #e2e8f0', borderRadius: '10px', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h4 style={{ margin: 0, fontSize: '16px', color: '#0f172a' }}>{task.name}</h4>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <span style={{ fontSize: '11px', background: task.category === 'Kelompok' ? '#e0e7ff' : '#f1f5f9', color: task.category === 'Kelompok' ? '#4338ca' : '#475569', padding: '4px 8px', borderRadius: '6px', fontWeight: 'bold' }}>
-                      {task.category}
-                    </span>
-                    <span style={{ fontSize: '11px', background: '#fee2e2', color: '#991b1b', padding: '4px 8px', borderRadius: '6px', fontWeight: 'bold' }}>
-                      {task.priority}
-                    </span>
+          {todos.length === 0 ? (
+            <p style={{ color: '#94a3b8', textAlign: 'center', padding: '30px 0' }}>Belum ada tugas tersimpan. Silakan buat tugas pertama Anda di atas!</p>
+          ) : (
+            <div style={{ display: 'grid', gap: '15px' }}>
+              {todos.map((task) => (
+                <div key={task.id} style={{ padding: '20px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', background: task.completed ? 'rgba(16, 185, 129, 0.03)' : 'rgba(0, 0, 0, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px', opacity: task.completed ? 0.75 : 1, transition: 'all 0.2s' }}>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 5px 0', fontSize: '17px', color: task.completed ? '#6ee7b7' : '#fff', textDecoration: task.completed ? 'line-through' : 'none' }}>
+                        {task.name}
+                      </h4>
+                    </div>
+                    
+                    {/* Badge Category & Priority */}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '11px', background: task.category === 'Kelompok' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.08)', color: task.category === 'Kelompok' ? '#818cf8' : '#cbd5e1', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        {task.category}
+                      </span>
+                      <span style={{ fontSize: '11px', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                        {task.priority}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {task.description && (
-                  <p style={{ margin: 0, fontSize: '13px', color: '#475569' }}>{task.description}</p>
-                )}
+                  {task.description && (
+                    <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', lineHeight: '1.4' }}>{task.description}</p>
+                  )}
 
-                <div style={{ display: 'flex', gap: '20px', fontSize: '12px', color: '#64748b', marginTop: '5px', borderTop: '1px solid #e2e8f0', paddingTop: '8px' }}>
-                  <span>📅 Diberikan: <strong>{task.assignedDate || '-'}</strong></span>
-                  <span>⏰ Deadline: <strong style={{ color: '#dc2626' }}>{task.deadlineDate} ({task.deadlineTime})</strong></span>
+                  {/* Footer Card: Info & Action Buttons */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '15px', fontSize: '12px', color: '#94a3b8' }}>
+                      <span>📅 Diberikan: <strong style={{ color: '#e2e8f0' }}>{task.assignedDate || '-'}</strong></span>
+                      <span>⏰ Deadline: <strong style={{ color: '#f87171' }}>{task.deadlineDate} ({task.deadlineTime})</strong></span>
+                    </div>
+
+                    {/* Tombol Aksi (Selesai, Edit, Hapus) */}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {/* Selesai / Belum */}
+                      <form action={toggleStatus}>
+                        <input type="hidden" name="id" value={task.id} />
+                        <button type="submit" style={{ padding: '6px 12px', background: task.completed ? '#334155' : '#059669', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+                          {task.completed ? '↩ Batalkan' : '✓ Selesai'}
+                        </button>
+                      </form>
+
+                      {/* Tombol Edit */}
+                      <a href={`/?edit=${task.id}`} style={{ padding: '6px 12px', background: '#d97706', color: '#fff', borderRadius: '6px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', display: 'inline-block' }}>
+                        Edit
+                      </a>
+
+                      {/* Tombol Hapus */}
+                      <form action={hapusTugas}>
+                        <input type="hidden" name="id" value={task.id} />
+                        <button type="submit" style={{ padding: '6px 12px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+                          Hapus
+                        </button>
+                      </form>
+                    </div>
+
+                  </div>
+
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
