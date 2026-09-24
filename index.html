@@ -1,535 +1,1222 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catatan Tugas Kuliah</title>
+    <title>TaskEdu - Catatan Tugas Kuliah Super Powerful</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --warning: #f59e0b;
-            --warning-hover: #d97706;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-
-        .container {
-            width: 100%;
-            max-width: 650px;
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
-        h2 {
-            text-align: center;
-            color: var(--primary);
-            margin-bottom: 25px;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
         }
-
-        .form-card, .toolbar-card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
         }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        .form-row .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--text-muted);
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 14px;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--primary);
-        }
-
-        textarea {
-            resize: vertical;
-            height: 70px;
-        }
-
-        button.btn-add {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 5px;
-        }
-
-        button.btn-add:hover {
-            background-color: var(--primary-hover);
-        }
-
-        button.btn-edit-mode {
-            background-color: var(--warning) !important;
-        }
-        button.btn-edit-mode:hover {
-            background-color: var(--warning-hover) !important;
-        }
-
-        .toolbar-card {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .task-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            border-left: 5px solid var(--primary);
-            position: relative;
-            transition: opacity 0.2s;
-        }
-
-        .task-card.completed {
-            opacity: 0.6;
-            border-left-color: #cbd5e1;
-        }
-
-        .task-card.completed .task-title {
-            text-decoration: line-through;
-            color: var(--text-muted);
-        }
-
-        .task-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-
-        .course-badge {
-            background: #e0e7ff;
-            color: var(--primary);
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .type-badge {
-            background: #f1f5f9;
-            color: var(--text-muted);
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .task-title {
-            font-size: 16px;
-            font-weight: 700;
-            margin: 5px 0;
-            color: var(--text-main);
-        }
-
-        .task-desc {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-            white-space: pre-line;
-        }
-
-        .task-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            border-top: 1px solid var(--border);
-            padding-top: 10px;
-            color: var(--text-muted);
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .task-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        button.btn-action {
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            border: none;
-            font-weight: 600;
-        }
-
-        .btn-toggle {
-            background-color: #e2e8f0;
-            color: var(--text-main);
-        }
-        .btn-toggle:hover { background-color: #cbd5e1; }
-
-        .btn-edit {
-            background-color: #fef3c7;
-            color: #d97706;
-        }
-        .btn-edit:hover { background-color: #fde68a; }
-
-        .btn-delete {
-            background-color: #fee2e2;
-            color: #dc2626;
-        }
-        .btn-delete:hover { background-color: #fecaca; }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 30px;
-            background: var(--card-bg);
-            border-radius: 12px;
-        }
-
-        #cancelEditBtn {
-            display: none;
-            width: 100%;
-            padding: 8px;
-            background-color: #cbd5e1;
-            color: #334155;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 6px;
-        }
-        #cancelEditBtn:hover {
-            background-color: #94a3b8;
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200 flex flex-col">
 
-<div class="container">
-    <h2>📝 Catatan Tugas Kuliah</h2>
-
-    <!-- Form Input / Edit Tugas -->
-    <div class="form-card">
-        <input type="hidden" id="editIndex" value="-1">
-        
-        <div class="form-row">
-            <div class="form-group">
-                <label>Nama Mata Kuliah</label>
-                <input type="text" id="courseInput" placeholder="Contoh: Analisis Multivariat">
-            </div>
-            <div class="form-group">
-                <label>Judul Tugas</label>
-                <input type="text" id="titleInput" placeholder="Contoh: Laporan Praktikum 1">
-            </div>
-        </div>
-
-        <div class="form-group" style="margin-top: 12px;">
-            <label>Deskripsi Tugas</label>
-            <textarea id="descInput" placeholder="Tulis detail instruksi atau catatan tugas di sini..."></textarea>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>Tanggal Diberikan</label>
-                <input type="date" id="startDateInput">
-            </div>
-            <div class="form-group">
-                <label>Deadline Tugas</label>
-                <input type="date" id="dueDateInput">
-            </div>
-        </div>
-
-        <div class="form-group" style="margin-top: 12px;">
-            <label>Tipe Tugas</label>
-            <select id="typeInput">
-                <option value="Individu">Individu</option>
-                <option value="Kelompok">Kelompok</option>
-            </select>
-        </div>
-
-        <button id="submitBtn" class="btn-add" onclick="saveTask()">Tambah Tugas</button>
-        <button id="cancelEditBtn" onclick="resetForm()">Batal Edit</button>
-    </div>
-
-    <!-- Toolbar: Pencarian, Filter, & Sorting -->
-    <div class="toolbar-card">
-        <div class="form-group" style="margin-bottom: 0;">
-            <input type="text" id="searchInput" placeholder="🔍 Cari berdasarkan judul, mata kuliah, atau deskripsi..." oninput="renderTasks()">
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Filter Tipe</label>
-                <select id="filterType" onchange="renderTasks()">
-                    <option value="Semua">Semua Tipe</option>
-                    <option value="Individu">Individu</option>
-                    <option value="Kelompok">Kelompok</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Urutkan Berdasarkan</label>
-                <select id="sortBy" onchange="renderTasks()">
-                    <option value="deadline">Deadline Terdekat ⏳</option>
-                    <option value="newest">Ditambahkan Terbaru 🕒</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <!-- Daftar Tugas -->
-    <div class="task-list" id="taskList"></div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        setDefaultDates();
-        renderTasks();
-    });
-
-    function setDefaultDates() {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById("startDateInput").value = today;
-    }
-
-    function saveTask() {
-        const course = document.getElementById("courseInput").value.trim();
-        const title = document.getElementById("titleInput").value.trim();
-        const desc = document.getElementById("descInput").value.trim();
-        const startDate = document.getElementById("startDateInput").value;
-        const dueDate = document.getElementById("dueDateInput").value;
-        const type = document.getElementById("typeInput").value;
-        const editIndex = parseInt(document.getElementById("editIndex").value);
-
-        if (course === "" || title === "") {
-            alert("Nama Mata Kuliah dan Judul Tugas wajib diisi!");
-            return;
-        }
-
-        let tasks = getTasks();
-
-        if (editIndex === -1) {
-            // Tambah tugas baru
-            const newTask = {
-                course,
-                title,
-                desc,
-                startDate,
-                dueDate,
-                type,
-                completed: false,
-                createdAt: Date.now()
-            };
-            tasks.push(newTask);
-        } else {
-            // Simpan perubahan tugas yang sedang diedit
-            tasks[editIndex].course = course;
-            tasks[editIndex].title = title;
-            tasks[editIndex].desc = desc;
-            tasks[editIndex].startDate = startDate;
-            tasks[editIndex].dueDate = dueDate;
-            tasks[editIndex].type = type;
-        }
-
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-        resetForm();
-        renderTasks();
-    }
-
-    function getTasks() {
-        return JSON.parse(localStorage.getItem("tasks")) || [];
-    }
-
-    function renderTasks() {
-        const taskList = document.getElementById("taskList");
-        taskList.innerHTML = "";
-        let tasks = getTasks();
-
-        const searchQuery = document.getElementById("searchInput").value.toLowerCase();
-        const filterType = document.getElementById("filterType").value;
-        const sortBy = document.getElementById("sortBy").value;
-
-        // Map tiap task dengan indeks aslinya sebelum difilter
-        let tasksWithIndex = tasks.map((task, index) => ({ ...task, originalIndex: index }));
-
-        // 1. Proses Pencarian & Filter
-        tasksWithIndex = tasksWithIndex.filter(task => {
-            const matchesSearch = task.title.toLowerCase().includes(searchQuery) ||
-                                  task.course.toLowerCase().includes(searchQuery) ||
-                                  (task.desc && task.desc.toLowerCase().includes(searchQuery));
-            const matchesType = (filterType === "Semua" || task.type === filterType);
-            return matchesSearch && matchesType;
-        });
-
-        // 2. Proses Sorting
-        tasksWithIndex.sort((a, b) => {
-            if (sortBy === "deadline") {
-                if (!a.dueDate) return 1;
-                if (!b.dueDate) return -1;
-                return new Date(a.dueDate) - new Date(b.dueDate);
-            } else if (sortBy === "newest") {
-                return (b.createdAt || 0) - (a.createdAt || 0);
-            }
-            return 0;
-        });
-
-        if (tasksWithIndex.length === 0) {
-            taskList.innerHTML = `<div class="empty-state">Tidak ada tugas yang cocok atau ditemukan. 🔍</div>`;
-            return;
-        }
-
-        tasksWithIndex.forEach((task) => {
-            const card = document.createElement("div");
-            card.className = `task-card ${task.completed ? "completed" : ""}`;
-
-            card.innerHTML = `
-                <div class="task-header">
-                    <span class="course-badge">${escapeHtml(task.course)}</span>
-                    <span class="type-badge">${escapeHtml(task.type)}</span>
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-brand-600 text-white rounded-xl shadow-lg shadow-brand-500/30 flex items-center justify-center">
+                    <i data-lucide="graduation-cap" class="w-6 h-6"></i>
                 </div>
-                <div class="task-title">${escapeHtml(task.title)}</div>
-                <div class="task-desc">${escapeHtml(task.desc || "Tidak ada deskripsi.")}</div>
-                <div class="task-footer">
+                <div>
+                    <h1 class="text-xl font-extrabold bg-gradient-to-r from-brand-600 to-violet-500 bg-clip-text text-transparent">TaskEdu</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Kuliah Task Manager Pro</p>
+                </div>
+            </div>
+
+            <!-- View Switcher -->
+            <div class="hidden md:flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <button onclick="switchView('list')" id="nav-view-list" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-white dark:bg-slate-700 shadow-sm text-brand-600 dark:text-white">
+                    <i data-lucide="layout-list" class="w-4 h-4"></i> List View
+                </button>
+                <button onclick="switchView('kanban')" id="nav-view-kanban" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <i data-lucide="kanban" class="w-4 h-4"></i> Kanban
+                </button>
+                <button onclick="switchView('calendar')" id="nav-view-calendar" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Kalender
+                </button>
+            </div>
+
+            <!-- Global Action Buttons -->
+            <div class="flex items-center gap-2">
+                <!-- Add Task Button -->
+                <button onclick="openTaskModal()" class="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md shadow-brand-500/20 transition-all">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Tambah Tugas</span>
+                </button>
+
+                <!-- Data Backup Dropdown / Action -->
+                <button onclick="openDataModal()" title="Backup & Restore Data" class="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all border border-slate-200 dark:border-slate-700">
+                    <i data-lucide="database" class="w-5 h-5"></i>
+                </button>
+
+                <!-- Dark Mode Toggle -->
+                <button id="themeToggleBtn" onclick="toggleDarkMode()" title="Ganti Mode Gelap/Terang" class="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all border border-slate-200 dark:border-slate-700">
+                    <i data-lucide="moon" id="themeIcon" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile View Switcher Bar -->
+        <div class="md:hidden flex border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 py-1.5 justify-around text-xs">
+            <button onclick="switchView('list')" id="m-nav-list" class="flex items-center gap-1.5 px-3 py-1 font-semibold rounded-lg text-brand-600 dark:text-white bg-slate-100 dark:bg-slate-800">
+                <i data-lucide="layout-list" class="w-3.5 h-3.5"></i> List
+            </button>
+            <button onclick="switchView('kanban')" id="m-nav-kanban" class="flex items-center gap-1.5 px-3 py-1 font-semibold rounded-lg text-slate-600 dark:text-slate-400">
+                <i data-lucide="kanban" class="w-3.5 h-3.5"></i> Kanban
+            </button>
+            <button onclick="switchView('calendar')" id="m-nav-calendar" class="flex items-center gap-1.5 px-3 py-1 font-semibold rounded-lg text-slate-600 dark:text-slate-400">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Kalender
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+        <!-- Urgency Alert Banner (Only visible if tasks due in <= 3 days) -->
+        <div id="urgencyBanner" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+            <div class="p-2 bg-amber-500 text-white rounded-xl shrink-0 mt-0.5">
+                <i data-lucide="bell-ring" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-sm font-bold text-amber-900 dark:text-amber-200">Perhatian: Ada Tugas Mendekati Deadline!</h3>
+                <p id="urgencyText" class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">Kamu memiliki beberapa tugas yang tenggat waktunya dalam 1-3 hari ke depan. Segera selesaikan ya!</p>
+            </div>
+            <button onclick="document.getElementById('urgencyBanner').classList.add('hidden')" class="text-amber-500 hover:text-amber-700 dark:hover:text-amber-300">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Analytics Dashboard Stats -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <!-- Total Tasks Card -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Tugas</p>
+                    <p id="statTotal" class="text-2xl font-black text-slate-900 dark:text-white mt-0.5">0</p>
+                </div>
+                <div class="p-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- Pending Tasks Card -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Belum Selesai</p>
+                    <p id="statPending" class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-0.5">0</p>
+                </div>
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
+                    <i data-lucide="clock" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- Completed Tasks Card -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Tugas Selesai</p>
+                    <p id="statCompleted" class="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">0</p>
+                </div>
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- Overdue Tasks Card -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Terlewat (Overdue)</p>
+                    <p id="statOverdue" class="text-2xl font-black text-rose-600 dark:text-rose-400 mt-0.5">0</p>
+                </div>
+                <div class="p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Overall Progress Bar Card -->
+        <section class="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-2">
+            <div class="flex items-center justify-between text-xs sm:text-sm font-bold">
+                <span class="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-brand-600"></i> Progress Penyelesaian Tugas Kuliah
+                </span>
+                <span id="progressPercent" class="text-brand-600 dark:text-brand-400 font-extrabold">0%</span>
+            </div>
+            <div class="w-full h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden p-0.5">
+                <div id="progressBar" class="h-full bg-gradient-to-r from-brand-500 to-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </section>
+
+        <!-- Filter, Search, & Sorting Toolbar -->
+        <section class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-3">
+            <!-- Top Search Input -->
+            <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400"></i>
+                <input type="text" id="searchInput" oninput="renderApp()" placeholder="Cari judul tugas, mata kuliah, atau kata kunci..." class="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all">
+            </div>
+
+            <!-- Filter Controls Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                <!-- Filter Matkul -->
+                <div>
+                    <label class="block font-semibold text-slate-500 dark:text-slate-400 mb-1">Mata Kuliah</label>
+                    <select id="filterCourse" onchange="renderApp()" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none font-medium">
+                        <option value="Semua">Semua Matkul</option>
+                    </select>
+                </div>
+
+                <!-- Filter Prioritas -->
+                <div>
+                    <label class="block font-semibold text-slate-500 dark:text-slate-400 mb-1">Prioritas</label>
+                    <select id="filterPriority" onchange="renderApp()" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none font-medium">
+                        <option value="Semua">Semua Prioritas</option>
+                        <option value="Tinggi">🔥 Tinggi</option>
+                        <option value="Sedang">⚡ Sedang</option>
+                        <option value="Rendah">☕ Rendah</option>
+                    </select>
+                </div>
+
+                <!-- Filter Tipe Tugas -->
+                <div>
+                    <label class="block font-semibold text-slate-500 dark:text-slate-400 mb-1">Tipe Tugas</label>
+                    <select id="filterType" onchange="renderApp()" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none font-medium">
+                        <option value="Semua">Semua Tipe</option>
+                        <option value="Individu">👤 Individu</option>
+                        <option value="Kelompok">👥 Kelompok</option>
+                    </select>
+                </div>
+
+                <!-- Urutkan (Sorting) -->
+                <div>
+                    <label class="block font-semibold text-slate-500 dark:text-slate-400 mb-1">Urutkan</label>
+                    <select id="sortBy" onchange="renderApp()" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none font-medium">
+                        <option value="deadline">⏳ Deadline Terdekat</option>
+                        <option value="priority">🔥 Prioritas Tertinggi</option>
+                        <option value="newest">🕒 Terbaru Ditambahkan</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 1: List View Container -->
+        <section id="viewContainerList" class="space-y-4">
+            <div id="taskListGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Task Cards will be dynamically injected here -->
+            </div>
+        </section>
+
+        <!-- VIEW 2: Kanban Board Container -->
+        <section id="viewContainerKanban" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Column 1: Belum Mulai -->
+            <div class="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-col h-[650px]">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-700">
+                    <span class="font-bold text-sm text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> Belum Mulai
+                    </span>
+                    <span id="kanbanCountToDo" class="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md font-bold">0</span>
+                </div>
+                <div id="kanbanColToDo" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" ondragover="allowDrop(event)" ondrop="dropTask(event, 'Belum Mulai')">
+                    <!-- Kanban task cards -->
+                </div>
+            </div>
+
+            <!-- Column 2: Sedang Dikerjakan -->
+            <div class="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-col h-[650px]">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-700">
+                    <span class="font-bold text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Dikerjakan
+                    </span>
+                    <span id="kanbanCountInProgress" class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-md font-bold">0</span>
+                </div>
+                <div id="kanbanColInProgress" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" ondragover="allowDrop(event)" ondrop="dropTask(event, 'Dikerjakan')">
+                    <!-- Kanban task cards -->
+                </div>
+            </div>
+
+            <!-- Column 3: Selesai -->
+            <div class="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex flex-col h-[650px]">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-700">
+                    <span class="font-bold text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Selesai
+                    </span>
+                    <span id="kanbanCountDone" class="text-xs bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 px-2 py-0.5 rounded-md font-bold">0</span>
+                </div>
+                <div id="kanbanColDone" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" ondragover="allowDrop(event)" ondrop="dropTask(event, 'Selesai')">
+                    <!-- Kanban task cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: Calendar View Container -->
+        <section id="viewContainerCalendar" class="hidden bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-4">
+            <!-- Calendar Navigation Header -->
+            <div class="flex items-center justify-between">
+                <h3 id="calendarMonthYear" class="text-lg font-extrabold text-slate-800 dark:text-white">Maret 2026</h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="resetCalendarToToday()" class="px-3 py-1.5 text-xs font-bold bg-slate-100 dark:bg-slate-700 rounded-lg">Hari Ini</button>
+                    <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Days of Week Header -->
+            <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-2">
+                <div>Min</div><div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div>Sab</div>
+            </div>
+
+            <!-- Calendar Days Grid -->
+            <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs">
+                <!-- Day cells dynamically rendered -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Task Form Modal (Add / Edit Task) -->
+    <div id="taskModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4 relative my-8 my-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 id="modalTitle" class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-brand-600"></i> Tambah Tugas Kuliah
+                </h3>
+                <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Form Content -->
+            <form id="taskForm" onsubmit="handleFormSubmit(event)" class="space-y-4 text-xs sm:text-sm">
+                <input type="hidden" id="taskId">
+
+                <!-- Row 1: Course & Color -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Nama Mata Kuliah *</label>
+                        <input type="text" id="formCourse" required placeholder="Contoh: Pemrograman Web" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
                     <div>
-                        📅 Diberikan: <b>${task.startDate || "-"}</b> | ⏳ Deadline: <b style="color: ${isNearDeadline(task.dueDate) && !task.completed ? '#dc2626' : 'inherit'}">${task.dueDate || "Tidak ada"}</b>
-                    </div>
-                    <div class="task-actions">
-                        <button class="btn-action btn-toggle" onclick="toggleTask(${task.originalIndex})">
-                            ${task.completed ? "Belum" : "Selesai"}
-                        </button>
-                        <button class="btn-action btn-edit" onclick="editTask(${task.originalIndex})">Edit</button>
-                        <button class="btn-action btn-delete" onclick="deleteTask(${task.originalIndex})">Hapus</button>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Warna Tag</label>
+                        <div class="flex items-center gap-1.5 pt-1">
+                            <input type="color" id="formColor" value="#6366f1" class="w-10 h-9 p-0.5 bg-transparent border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer">
+                            <span class="text-xs text-slate-400">Pilih warna</span>
+                        </div>
                     </div>
                 </div>
-            `;
-            taskList.appendChild(card);
-        });
-    }
 
-    function editTask(index) {
-        const tasks = getTasks();
-        const task = tasks[index];
+                <!-- Row 2: Title -->
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Judul Tugas *</label>
+                    <input type="text" id="formTitle" required placeholder="Contoh: Laporan Akhir Sistem Informasi" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
 
-        // Masukkan data lama ke form input
-        document.getElementById("courseInput").value = task.course;
-        document.getElementById("titleInput").value = task.title;
-        document.getElementById("descInput").value = task.desc || "";
-        document.getElementById("startDateInput").value = task.startDate || "";
-        document.getElementById("dueDateInput").value = task.dueDate || "";
-        document.getElementById("typeInput").value = task.type;
-        document.getElementById("editIndex").value = index;
+                <!-- Row 3: Description -->
+                <div>
+                    <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Deskripsi / Detail Instruksi</label>
+                    <textarea id="formDesc" rows="3" placeholder="Instruksi pengerjaan, format penulisan, atau catatan penting..." class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 custom-scrollbar"></textarea>
+                </div>
 
-        // Ubah tampilan tombol utama jadi mode edit
-        const submitBtn = document.getElementById("submitBtn");
-        submitBtn.textContent = "Simpan Perubahan";
-        submitBtn.classList.add("btn-edit-mode");
-        document.getElementById("cancelEditBtn").style.display = "block";
+                <!-- Row 4: Type, Priority, Status -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Tipe Tugas</label>
+                        <select id="formType" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                            <option value="Individu">Individu 👤</option>
+                            <option value="Kelompok">Kelompok 👥</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Prioritas</label>
+                        <select id="formPriority" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                            <option value="Tinggi">🔥 Tinggi</option>
+                            <option value="Sedang" selected>⚡ Sedang</option>
+                            <option value="Rendah">☕ Rendah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Status</label>
+                        <select id="formStatus" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                            <option value="Belum Mulai">Belum Mulai</option>
+                            <option value="Dikerjakan">Dikerjakan</option>
+                            <option value="Selesai">Selesai</option>
+                        </select>
+                    </div>
+                </div>
 
-        // Scroll otomatis ke atas agar form terlihat
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+                <!-- Row 5: Dates & Time -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Tgl Diberikan</label>
+                        <input type="date" id="formStartDate" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Tgl Deadline</label>
+                        <input type="date" id="formDueDate" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Jam Deadline</label>
+                        <input type="time" id="formDueTime" value="23:59" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                    </div>
+                </div>
 
-    function resetForm() {
-        document.getElementById("courseInput").value = "";
-        document.getElementById("titleInput").value = "";
-        document.getElementById("descInput").value = "";
-        setDefaultDates();
-        document.getElementById("typeInput").value = "Individu";
-        document.getElementById("editIndex").value = "-1";
+                <!-- Row 6: Reference Attachment URL -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Link Lampiran / URL</label>
+                        <input type="url" id="formRefUrl" placeholder="https://drive.google.com/..." class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Label Link (Opsional)</label>
+                        <input type="text" id="formRefLabel" placeholder="Contoh: Modul PDF / Classroom" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
 
-        const submitBtn = document.getElementById("submitBtn");
-        submitBtn.textContent = "Tambah Tugas";
-        submitBtn.classList.remove("btn-edit-mode");
-        document.getElementById("cancelEditBtn").style.display = "none";
-    }
+                <!-- Row 7: Subtasks Checklist Builder -->
+                <div class="space-y-2 border-t border-slate-100 dark:border-slate-700 pt-3">
+                    <label class="block font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                        <span>Sub-Tugas (Checklist Pengerjaan)</span>
+                        <button type="button" onclick="addSubtaskInput()" class="text-xs text-brand-600 dark:text-brand-400 font-bold hover:underline flex items-center gap-1">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah Sub-tugas
+                        </button>
+                    </label>
+                    <div id="subtaskInputsContainer" class="space-y-2 max-h-36 overflow-y-auto custom-scrollbar">
+                        <!-- Dynamic subtask rows -->
+                    </div>
+                </div>
 
-    function toggleTask(index) {
-        const tasks = getTasks();
-        tasks[index].completed = !tasks[index].completed;
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-        renderTasks();
-    }
+                <!-- Modal Actions -->
+                <div class="flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
+                    <button type="button" onclick="closeTaskModal()" class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 text-xs font-bold rounded-xl bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-500/20">
+                        Simpan Tugas
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    function deleteTask(index) {
-        if (confirm("Yakin ingin menghapus tugas ini?")) {
-            const tasks = getTasks();
-            tasks.splice(index, 1);
-            localStorage.setItem("tasks", JSON.stringify(tasks));
-            renderTasks();
-            resetForm();
+    <!-- Data Management & Backup Modal -->
+    <div id="dataModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="database" class="w-5 h-5 text-brand-600"></i> Kelola & Backup Data
+                </h3>
+                <button onclick="closeDataModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs sm:text-sm">
+                <!-- Export JSON -->
+                <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-between">
+                    <div>
+                        <p class="font-bold text-slate-800 dark:text-slate-200">Ekspor File JSON</p>
+                        <p class="text-xs text-slate-400">Cadangkan seluruh data tugas ke file</p>
+                    </div>
+                    <button onclick="exportDataJSON()" class="px-3 py-1.5 bg-brand-600 text-white font-bold rounded-lg text-xs hover:bg-brand-700">Ekspor</button>
+                </div>
+
+                <!-- Export CSV -->
+                <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-between">
+                    <div>
+                        <p class="font-bold text-slate-800 dark:text-slate-200">Ekspor File CSV (Excel)</p>
+                        <p class="text-xs text-slate-400">Simpan daftar tugas untuk Excel/Sheets</p>
+                    </div>
+                    <button onclick="exportDataCSV()" class="px-3 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700">CSV</button>
+                </div>
+
+                <!-- Import JSON -->
+                <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl space-y-2">
+                    <div>
+                        <p class="font-bold text-slate-800 dark:text-slate-200">Impor Data dari JSON</p>
+                        <p class="text-xs text-slate-400">Pulihkan data tugas dari file cadangan</p>
+                    </div>
+                    <input type="file" id="importFileInput" accept=".json" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                    <button onclick="importDataJSON()" class="w-full py-1.5 bg-slate-700 text-white font-bold rounded-lg text-xs hover:bg-slate-800">Proses Impor</button>
+                </div>
+
+                <!-- Reset Data -->
+                <div class="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-xl space-y-2">
+                    <p class="font-bold text-rose-800 dark:text-rose-300">Hapus / Reset Semua Data</p>
+                    <p class="text-xs text-rose-600 dark:text-rose-400">Tindakan ini akan menghapus seluruh catatan tugas dari browser secara permanen.</p>
+                    <button onclick="resetAllData()" class="w-full py-1.5 bg-rose-600 text-white font-bold rounded-lg text-xs hover:bg-rose-700">Hapus Semua Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'taskedu_tasks_data';
+        const THEME_KEY = 'taskedu_theme';
+        let tasks = [];
+        let currentView = 'list';
+        let calendarDate = new Date();
+
+        // Sample initial data if storage is completely empty
+        const sampleTasks = [
+            {
+                id: 'task_1',
+                course: 'Pemrograman Web',
+                courseColor: '#6366f1',
+                title: 'Project Akhir E-Commerce REST API',
+                desc: 'Membuat backend menggunakan Node.js dan frontend Tailwind CSS. Wajib include sertifikasi autentikasi JWT.',
+                type: 'Kelompok',
+                priority: 'Tinggi',
+                status: 'Dikerjakan',
+                startDate: getOffsetDate(-3),
+                dueDate: getOffsetDate(2),
+                dueTime: '23:59',
+                refUrl: 'https://github.com',
+                refLabel: 'Repo GitHub Tim',
+                subtasks: [
+                    { id: 'st_1', title: 'Perancangan Database ERD', completed: true },
+                    { id: 'st_2', title: 'Membuat Endpoint Auth API', completed: true },
+                    { id: 'st_3', title: 'Integrasi Payment Gateway', completed: false }
+                ],
+                createdAt: Date.now() - 86400000 * 3
+            },
+            {
+                id: 'task_2',
+                course: 'Sistem Basis Data',
+                courseColor: '#059669',
+                title: 'Kuis Normalisasi Database & Indexing',
+                desc: 'Mempelajari bentuk Normalisasi 1NF hingga 3NF serta optimasi query SQL.',
+                type: 'Individu',
+                priority: 'Sedang',
+                status: 'Belum Mulai',
+                startDate: getOffsetDate(-1),
+                dueDate: getOffsetDate(5),
+                dueTime: '10:00',
+                refUrl: 'https://classroom.google.com',
+                refLabel: 'Slide Materi Kuliah',
+                subtasks: [
+                    { id: 'st_4', title: 'Membaca Bab 4 Buku Silberschatz', completed: false }
+                ],
+                createdAt: Date.now() - 86400000
+            },
+            {
+                id: 'task_3',
+                course: 'Kalkulus Lanjut',
+                courseColor: '#dc2626',
+                title: 'Tugas Latihan Integral Lipat Tiga',
+                desc: 'Kerjakan Soal No 1-15 di buku paket halaman 120.',
+                type: 'Individu',
+                priority: 'Rendah',
+                status: 'Selesai',
+                startDate: getOffsetDate(-5),
+                dueDate: getOffsetDate(-1),
+                dueTime: '23:59',
+                refUrl: '',
+                refLabel: '',
+                subtasks: [],
+                createdAt: Date.now() - 86400000 * 5
+            }
+        ];
+
+        function getOffsetDate(daysOffset) {
+            const d = new Date();
+            d.setDate(d.getDate() + daysOffset);
+            return d.toISOString().split('T')[0];
         }
-    }
 
-    function isNearDeadline(dueDateStr) {
-        if (!dueDateStr) return false;
-        const today = new Date();
-        const dueDate = new Date(dueDateStr);
-        const diffTime = dueDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays <= 2 && diffDays >= 0;
-    }
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            loadTasks();
+            renderApp();
+            lucide.createIcons();
+        });
 
-    function escapeHtml(text) {
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-    }
-</script>
+        function initTheme() {
+            const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').setAttribute('data-lucide', 'sun');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').setAttribute('data-lucide', 'moon');
+            }
+        }
 
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+            document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+
+        function loadTasks() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                try {
+                    tasks = JSON.parse(data);
+                } catch (e) {
+                    tasks = sampleTasks;
+                }
+            } else {
+                tasks = sampleTasks;
+                saveTasks();
+            }
+        }
+
+        function saveTasks() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        }
+
+        function switchView(viewName) {
+            currentView = viewName;
+
+            // Reset navigation active styles
+            ['list', 'kanban', 'calendar'].forEach(v => {
+                const btn = document.getElementById(`nav-view-${v}`);
+                const mBtn = document.getElementById(`m-nav-${v}`);
+                const container = document.getElementById(`viewContainer${v.charAt(0).toUpperCase() + v.slice(1)}`);
+
+                if (v === viewName) {
+                    btn?.classList.add('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-brand-600', 'dark:text-white');
+                    btn?.classList.remove('text-slate-600', 'dark:text-slate-400');
+                    mBtn?.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-white');
+                    mBtn?.classList.remove('text-slate-600', 'dark:text-slate-400');
+                    container?.classList.remove('hidden');
+                } else {
+                    btn?.classList.remove('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-brand-600', 'dark:text-white');
+                    btn?.classList.add('text-slate-600', 'dark:text-slate-400');
+                    mBtn?.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-white');
+                    mBtn?.classList.add('text-slate-600', 'dark:text-slate-400');
+                    container?.classList.add('hidden');
+                }
+            });
+
+            renderApp();
+        }
+
+        function getFilteredAndSortedTasks() {
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const courseFilter = document.getElementById('filterCourse').value;
+            const priorityFilter = document.getElementById('filterPriority').value;
+            const typeFilter = document.getElementById('filterType').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let result = tasks.filter(task => {
+                const matchSearch = task.title.toLowerCase().includes(search) ||
+                                    task.course.toLowerCase().includes(search) ||
+                                    (task.desc && task.desc.toLowerCase().includes(search));
+                const matchCourse = courseFilter === 'Semua' || task.course === courseFilter;
+                const matchPriority = priorityFilter === 'Semua' || task.priority === priorityFilter;
+                const matchType = typeFilter === 'Semua' || task.type === typeFilter;
+
+                return matchSearch && matchCourse && matchPriority && matchType;
+            });
+
+            // Sorting logic
+            result.sort((a, b) => {
+                if (sortBy === 'deadline') {
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return new Date(`${a.dueDate}T${a.dueTime || '23:59'}`) - new Date(`${b.dueDate}T${b.dueTime || '23:59'}`);
+                } else if (sortBy === 'priority') {
+                    const weight = { 'Tinggi': 3, 'Sedang': 2, 'Rendah': 1 };
+                    return weight[b.priority] - weight[a.priority];
+                } else if (sortBy === 'newest') {
+                    return (b.createdAt || 0) - (a.createdAt || 0);
+                }
+                return 0;
+            });
+
+            return result;
+        }
+
+        function renderApp() {
+            updateCourseFilterDropdown();
+            renderAnalytics();
+
+            const filteredTasks = getFilteredAndSortedTasks();
+
+            if (currentView === 'list') {
+                renderListView(filteredTasks);
+            } else if (currentView === 'kanban') {
+                renderKanbanView(filteredTasks);
+            } else if (currentView === 'calendar') {
+                renderCalendarView();
+            }
+
+            lucide.createIcons();
+        }
+
+        function updateCourseFilterDropdown() {
+            const select = document.getElementById('filterCourse');
+            const currentVal = select.value;
+            const courses = [...new Set(tasks.map(t => t.course))].sort();
+
+            select.innerHTML = `<option value="Semua">Semua Matkul</option>`;
+            courses.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                if (c === currentVal) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderAnalytics() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.status === 'Selesai').length;
+            const pending = tasks.filter(t => t.status !== 'Selesai').length;
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const overdue = tasks.filter(t => t.status !== 'Selesai' && t.dueDate && t.dueDate < todayStr).length;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statCompleted').textContent = completed;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statOverdue').textContent = overdue;
+
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+            document.getElementById('progressPercent').textContent = `${percent}%`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+
+            // Urgency Banner Logic
+            const urgentTasks = tasks.filter(t => {
+                if (t.status === 'Selesai' || !t.dueDate) return false;
+                const diffDays = Math.ceil((new Date(t.dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+                return diffDays >= 0 && diffDays <= 3;
+            });
+
+            const banner = document.getElementById('urgencyBanner');
+            if (urgentTasks.length > 0) {
+                banner.classList.remove('hidden');
+                document.getElementById('urgencyText').textContent = `Ada ${urgentTasks.length} tugas mendesak yang harus selesai dalam 1-3 hari ini: ${urgentTasks.map(t => t.title).join(', ')}.`;
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        function renderListView(filteredTasks) {
+            const container = document.getElementById('taskListGrid');
+            container.innerHTML = '';
+
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 p-6 space-y-3">
+                        <i data-lucide="inbox" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto"></i>
+                        <p class="text-slate-500 dark:text-slate-400 font-semibold text-sm">Tidak ada catatan tugas yang ditemukan.</p>
+                        <button onclick="openTaskModal()" class="px-4 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold shadow-md">
+                            + Tambah Tugas Baru
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredTasks.forEach(task => {
+                const isOverdue = task.status !== 'Selesai' && task.dueDate && task.dueDate < new Date().toISOString().split('T')[0];
+                const subtasksCount = task.subtasks ? task.subtasks.length : 0;
+                const subtasksDone = task.subtasks ? task.subtasks.filter(s => s.completed).length : 0;
+
+                const card = document.createElement('div');
+                card.className = `bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700/60 shadow-sm transition-all duration-200 hover:shadow-md space-y-3 relative flex flex-col justify-between ${task.status === 'Selesai' ? 'opacity-70' : ''}`;
+
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <!-- Card Header Tags -->
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <span class="px-2.5 py-1 text-xs font-bold rounded-lg text-white shadow-sm flex items-center gap-1.5" style="background-color: ${task.courseColor || '#6366f1'}">
+                                <i data-lucide="book-open" class="w-3 h-3"></i> ${escapeHtml(task.course)}
+                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="px-2 py-0.5 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                    ${task.type === 'Kelompok' ? '👥 Kelompok' : '👤 Individu'}
+                                </span>
+                                <span class="px-2 py-0.5 text-xs font-bold rounded-md ${getPriorityBadgeClass(task.priority)}">
+                                    ${getPriorityEmoji(task.priority)} ${task.priority}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Task Title & Description -->
+                        <h4 class="font-extrabold text-base text-slate-900 dark:text-white leading-snug ${task.status === 'Selesai' ? 'line-through text-slate-400 dark:text-slate-500' : ''}">
+                            ${escapeHtml(task.title)}
+                        </h4>
+                        ${task.desc ? `<p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">${escapeHtml(task.desc)}</p>` : ''}
+
+                        <!-- Subtasks Progress Bar if available -->
+                        ${subtasksCount > 0 ? `
+                            <div class="pt-1 space-y-1">
+                                <div class="flex justify-between text-[11px] font-semibold text-slate-500">
+                                    <span>Sub-tugas Checklist</span>
+                                    <span>${subtasksDone}/${subtasksCount} (${Math.round((subtasksDone/subtasksCount)*100)}%)</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-emerald-500 transition-all" style="width: ${(subtasksDone/subtasksCount)*100}%"></div>
+                                </div>
+                                <div class="space-y-1 pt-1">
+                                    ${task.subtasks.map((st) => `
+                                        <label class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
+                                            <input type="checkbox" ${st.completed ? 'checked' : ''} onchange="toggleSubtask('${task.id}', '${st.id}')" class="rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                                            <span class="${st.completed ? 'line-through text-slate-400' : ''}">${escapeHtml(st.title)}</span>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Link Attachment if provided -->
+                        ${task.refUrl ? `
+                            <div class="pt-1">
+                                <a href="${escapeHtml(task.refUrl)}" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline">
+                                    <i data-lucide="link" class="w-3.5 h-3.5"></i> ${escapeHtml(task.refLabel || 'Lampiran / Link Referensi')}
+                                </a>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Footer Details & Actions -->
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-700/80 flex items-center justify-between gap-2 text-xs text-slate-500">
+                        <div class="space-y-0.5">
+                            <p class="flex items-center gap-1">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                                Deadline: <strong class="${isOverdue ? 'text-rose-600 dark:text-rose-400 font-extrabold' : 'text-slate-700 dark:text-slate-200'}">${task.dueDate || '-'} (${task.dueTime || '23:59'})</strong>
+                            </p>
+                        </div>
+
+                        <!-- Actions Dropdown & Quick Toggle -->
+                        <div class="flex items-center gap-1.5">
+                            <select onchange="updateTaskStatus('${task.id}', this.value)" class="p-1.5 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-lg text-xs outline-none">
+                                <option value="Belum Mulai" ${task.status === 'Belum Mulai' ? 'selected' : ''}>Belum</option>
+                                <option value="Dikerjakan" ${task.status === 'Dikerjakan' ? 'selected' : ''}>Dikerjakan</option>
+                                <option value="Selesai" ${task.status === 'Selesai' ? 'selected' : ''}>Selesai ✓</option>
+                            </select>
+
+                            <button onclick="editTask('${task.id}')" title="Edit Tugas" class="p-1.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 rounded-lg hover:bg-amber-100">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteTask('${task.id}')" title="Hapus Tugas" class="p-1.5 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300 rounded-lg hover:bg-rose-100">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function renderKanbanView(filteredTasks) {
+            const colToDo = document.getElementById('kanbanColToDo');
+            const colInProgress = document.getElementById('kanbanColInProgress');
+            const colDone = document.getElementById('kanbanColDone');
+
+            colToDo.innerHTML = '';
+            colInProgress.innerHTML = '';
+            colDone.innerHTML = '';
+
+            const listToDo = filteredTasks.filter(t => t.status === 'Belum Mulai');
+            const listInProgress = filteredTasks.filter(t => t.status === 'Dikerjakan');
+            const listDone = filteredTasks.filter(t => t.status === 'Selesai');
+
+            document.getElementById('kanbanCountToDo').textContent = listToDo.length;
+            document.getElementById('kanbanCountInProgress').textContent = listInProgress.length;
+            document.getElementById('kanbanCountDone').textContent = listDone.length;
+
+            const renderKanbanCard = (task) => {
+                const el = document.createElement('div');
+                el.draggable = true;
+                el.ondragstart = (e) => e.dataTransfer.setData('taskId', task.id);
+                el.className = "bg-white dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 shadow-sm cursor-grab active:cursor-grabbing space-y-2";
+
+                el.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded text-white" style="background-color: ${task.courseColor || '#6366f1'}">${escapeHtml(task.course)}</span>
+                        <span class="text-[10px] font-bold ${getPriorityBadgeClass(task.priority)}">${getPriorityEmoji(task.priority)}</span>
+                    </div>
+                    <p class="font-bold text-xs text-slate-800 dark:text-white leading-snug">${escapeHtml(task.title)}</p>
+                    <div class="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 dark:border-slate-700/60 pt-2">
+                        <span>⌛ ${task.dueDate || '-'}</span>
+                        <div class="flex items-center gap-1">
+                            <button onclick="editTask('${task.id}')" class="hover:text-amber-500"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="deleteTask('${task.id}')" class="hover:text-rose-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    </div>
+                `;
+                return el;
+            };
+
+            listToDo.forEach(t => colToDo.appendChild(renderKanbanCard(t)));
+            listInProgress.forEach(t => colInProgress.appendChild(renderKanbanCard(t)));
+            listDone.forEach(t => colDone.appendChild(renderKanbanCard(t)));
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function dropTask(ev, targetStatus) {
+            ev.preventDefault();
+            const taskId = ev.dataTransfer.getData('taskId');
+            if (taskId) {
+                updateTaskStatus(taskId, targetStatus);
+            }
+        }
+
+        function renderCalendarView() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+
+            const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            document.getElementById('calendarMonthYear').textContent = `${monthNames[month]} ${year}`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            // Blank cells before month starts
+            for (let i = 0; i < firstDayIndex; i++) {
+                const empty = document.createElement('div');
+                empty.className = "h-20 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl";
+                grid.appendChild(empty);
+            }
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayTasks = tasks.filter(t => t.dueDate === dateStr);
+                const isToday = dateStr === todayStr;
+
+                const cell = document.createElement('div');
+                cell.className = `h-20 p-1.5 rounded-xl border ${isToday ? 'border-brand-500 bg-brand-50/30 dark:bg-brand-950/20' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800'} flex flex-col justify-between overflow-hidden`;
+
+                cell.innerHTML = `
+                    <div class="flex justify-between items-center font-bold text-[11px] ${isToday ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500'}">
+                        <span>${day}</span>
+                        ${dayTasks.length > 0 ? `<span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>` : ''}
+                    </div>
+                    <div class="space-y-1 overflow-y-auto custom-scrollbar flex-1 mt-1">
+                        ${dayTasks.map(t => `
+                            <div onclick="editTask('${t.id}')" title="${escapeHtml(t.title)}" class="text-[9px] font-bold truncate px-1 py-0.5 rounded text-white cursor-pointer hover:opacity-80" style="background-color: ${t.courseColor || '#6366f1'}">
+                                ${escapeHtml(t.title)}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                grid.appendChild(cell);
+            }
+        }
+
+        function changeMonth(delta) {
+            calendarDate.setMonth(calendarDate.getMonth() + delta);
+            renderCalendarView();
+            lucide.createIcons();
+        }
+
+        function resetCalendarToToday() {
+            calendarDate = new Date();
+            renderCalendarView();
+            lucide.createIcons();
+        }
+
+        function updateTaskStatus(taskId, newStatus) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                const prevStatus = task.status;
+                task.status = newStatus;
+                saveTasks();
+                renderApp();
+
+                if (newStatus === 'Selesai' && prevStatus !== 'Selesai') {
+                    triggerConfetti();
+                }
+            }
+        }
+
+        function toggleSubtask(taskId, subtaskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && task.subtasks) {
+                const st = task.subtasks.find(s => s.id === subtaskId);
+                if (st) {
+                    st.completed = !st.completed;
+                    
+                    // Check if all subtasks completed
+                    if (task.subtasks.every(s => s.completed) && task.status !== 'Selesai') {
+                        task.status = 'Selesai';
+                        triggerConfetti();
+                    }
+                    saveTasks();
+                    renderApp();
+                }
+            }
+        }
+
+        function deleteTask(taskId) {
+            if (confirm("Apakah Anda yakin ingin menghapus catatan tugas ini?")) {
+                tasks = tasks.filter(t => t.id !== taskId);
+                saveTasks();
+                renderApp();
+            }
+        }
+
+        function triggerConfetti() {
+            if (window.confetti) {
+                confetti({
+                    particleCount: 80,
+                    spread: 60,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function openTaskModal(isEdit = false) {
+            document.getElementById('taskModal').classList.remove('hidden');
+            if (!isEdit) {
+                document.getElementById('modalTitle').innerHTML = `<i data-lucide="plus-circle" class="w-5 h-5 text-brand-600"></i> Tambah Tugas Kuliah`;
+                document.getElementById('taskForm').reset();
+                document.getElementById('taskId').value = '';
+                document.getElementById('formStartDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('subtaskInputsContainer').innerHTML = '';
+            }
+            lucide.createIcons();
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+        }
+
+        function editTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            openTaskModal(true);
+            document.getElementById('modalTitle').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-amber-500"></i> Edit Tugas Kuliah`;
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('formCourse').value = task.course;
+            document.getElementById('formColor').value = task.courseColor || '#6366f1';
+            document.getElementById('formTitle').value = task.title;
+            document.getElementById('formDesc').value = task.desc || '';
+            document.getElementById('formType').value = task.type || 'Individu';
+            document.getElementById('formPriority').value = task.priority || 'Sedang';
+            document.getElementById('formStatus').value = task.status || 'Belum Mulai';
+            document.getElementById('formStartDate').value = task.startDate || '';
+            document.getElementById('formDueDate').value = task.dueDate || '';
+            document.getElementById('formDueTime').value = task.dueTime || '23:59';
+            document.getElementById('formRefUrl').value = task.refUrl || '';
+            document.getElementById('formRefLabel').value = task.refLabel || '';
+
+            const container = document.getElementById('subtaskInputsContainer');
+            container.innerHTML = '';
+            if (task.subtasks) {
+                task.subtasks.forEach(st => addSubtaskInput(st.title, st.completed));
+            }
+        }
+
+        function addSubtaskInput(title = '', completed = false) {
+            const container = document.getElementById('subtaskInputsContainer');
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2';
+            row.innerHTML = `
+                <input type="checkbox" ${completed ? 'checked' : ''} class="subtask-complete-check rounded border-slate-300 text-brand-600">
+                <input type="text" value="${escapeHtml(title)}" placeholder="Nama sub-tugas..." class="subtask-title-input flex-1 p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs outline-none">
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 p-1">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            `;
+            container.appendChild(row);
+            lucide.createIcons();
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('taskId').value;
+
+            // Collect subtasks
+            const subtaskRows = document.querySelectorAll('#subtaskInputsContainer > div');
+            const subtasks = [];
+            subtaskRows.forEach((row, index) => {
+                const title = row.querySelector('.subtask-title-input').value.trim();
+                const completed = row.querySelector('.subtask-complete-check').checked;
+                if (title) {
+                    subtasks.push({ id: `st_${Date.now()}_${index}`, title, completed });
+                }
+            });
+
+            const taskData = {
+                id: id || `task_${Date.now()}`,
+                course: document.getElementById('formCourse').value.trim(),
+                courseColor: document.getElementById('formColor').value,
+                title: document.getElementById('formTitle').value.trim(),
+                desc: document.getElementById('formDesc').value.trim(),
+                type: document.getElementById('formType').value,
+                priority: document.getElementById('formPriority').value,
+                status: document.getElementById('formStatus').value,
+                startDate: document.getElementById('formStartDate').value,
+                dueDate: document.getElementById('formDueDate').value,
+                dueTime: document.getElementById('formDueTime').value,
+                refUrl: document.getElementById('formRefUrl').value.trim(),
+                refLabel: document.getElementById('formRefLabel').value.trim(),
+                subtasks: subtasks,
+                createdAt: id ? (tasks.find(t => t.id === id)?.createdAt || Date.now()) : Date.now()
+            };
+
+            if (id) {
+                const index = tasks.findIndex(t => t.id === id);
+                if (index !== -1) tasks[index] = taskData;
+            } else {
+                tasks.push(taskData);
+            }
+
+            saveTasks();
+            closeTaskModal();
+            renderApp();
+        }
+
+        function openDataModal() {
+            document.getElementById('dataModal').classList.remove('hidden');
+        }
+
+        function closeDataModal() {
+            document.getElementById('dataModal').classList.add('hidden');
+        }
+
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `TaskEdu_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function exportDataCSV() {
+            if (tasks.length === 0) {
+                alert("Tidak ada data untuk diekspor!");
+                return;
+            }
+            let csv = "Mata Kuliah,Judul Tugas,Tipe,Prioritas,Status,Deadline\n";
+            tasks.forEach(t => {
+                csv += `"${t.course}","${t.title}","${t.type}","${t.priority}","${t.status}","${t.dueDate || ''}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TaskEdu_Tugas_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        function importDataJSON() {
+            const fileInput = document.getElementById('importFileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Silakan pilih file JSON cadangan terlebih dahulu!");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        tasks = imported;
+                        saveTasks();
+                        renderApp();
+                        closeDataModal();
+                        alert("Data berhasil dipulihkan!");
+                    } else {
+                        alert("Format file JSON tidak valid.");
+                    }
+                } catch (err) {
+                    alert("Gagal membaca file JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function resetAllData() {
+            if (confirm("PERINGATAN: Seluruh catatan tugas akan dihapus secara permanen. Lanjutkan?")) {
+                tasks = [];
+                saveTasks();
+                renderApp();
+                closeDataModal();
+            }
+        }
+
+        function getPriorityBadgeClass(priority) {
+            switch (priority) {
+                case 'Tinggi': return 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300';
+                case 'Sedang': return 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300';
+                case 'Rendah': return 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+                default: return 'bg-slate-100 text-slate-700';
+            }
+        }
+
+        function getPriorityEmoji(priority) {
+            switch (priority) {
+                case 'Tinggi': return '🔥';
+                case 'Sedang': return '⚡';
+                case 'Rendah': return '☕';
+                default: return '📌';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
 </body>
 </html>
