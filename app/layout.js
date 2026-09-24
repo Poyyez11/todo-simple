@@ -1,10 +1,8 @@
-import './globals.css'; // Sesuaikan jika Anda menggunakan css global
-
 export const metadata = {
   title: 'Task Tracker Pro',
   description: 'Manajemen tugas kuliah dan proyek',
-  manifest: '/manifest.json', // Ini menghubungkan manifest yang kita buat
-  themeColor: '#0f172a',      // Mengubah warna atas (status bar) HP menjadi gelap
+  manifest: '/manifest.json', 
+  themeColor: '#0f172a',      
 };
 
 export default function RootLayout({ children }) {
