@@ -1,27 +1,31 @@
 export const dynamic = 'force-dynamic';
 
-import { kv } from '@vercel/kv';
+import Redis from 'ioredis';
 import { revalidatePath } from 'next/cache';
 
-export default async function Page() {
-  // 1. Mengambil data list tugas dari database Vercel KV
-  // 'todo-list' adalah nama kuncinya. 0, -1 artinya mengambil semua urutan data.
-  const todos = await kv.lrange('todo-list', 0, -1) || [];
+// Menghubungkan menggunakan environment variable dari Vercel Storage
+const redis = new Redis(process.env.STORAGE_REDIS_URL);
 
-  // 2. Fungsi untuk menambah data ke database (Server Action)
+export default async function Page() {
+  // 1. Mengambil data list tugas dari database Redis
+  const rawTodos = await redis.lrange('todo-list', 0, -1);
+  const todos = rawTodos || [];
+
+  // 2. Fungsi untuk menambah tugas baru (Server Action)
   async function tambahTugas(formData) {
     'use server';
     const tugasBaru = formData.get('tugas');
     
     if (tugasBaru) {
-      await kv.rpush('todo-list', tugasBaru); // Menyimpan tugas baru ke paling bawah
-      revalidatePath('/'); // Memuat ulang halaman otomatis
+      const dbClient = new Redis(process.env.STORAGE_REDIS_URL);
+      await dbClient.rpush('todo-list', tugasBaru);
+      revalidatePath('/');
     }
   }
 
   return (
     <div style={{ padding: '30px', fontFamily: 'sans-serif' }}>
-      <h2>Todo List (Tersimpan di Cloud)</h2>
+      <h2>TaskEdu - Todo List (Cloud Database)</h2>
 
       {/* Form Input Data */}
       <form action={tambahTugas} style={{ marginBottom: '20px' }}>
