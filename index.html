@@ -28,6 +28,11 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Firebase SDK (v8 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body {
@@ -115,7 +120,7 @@
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
 
-        <!-- Urgency Alert Banner (Only visible if tasks due in <= 3 days) -->
+        <!-- Urgency Alert Banner -->
         <div id="urgencyBanner" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
             <div class="p-2 bg-amber-500 text-white rounded-xl shrink-0 mt-0.5">
                 <i data-lucide="bell-ring" class="w-5 h-5"></i>
@@ -131,7 +136,6 @@
 
         <!-- Analytics Dashboard Stats -->
         <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            <!-- Total Tasks Card -->
             <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Tugas</p>
@@ -142,7 +146,6 @@
                 </div>
             </div>
 
-            <!-- Pending Tasks Card -->
             <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Belum Selesai</p>
@@ -153,7 +156,6 @@
                 </div>
             </div>
 
-            <!-- Completed Tasks Card -->
             <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Tugas Selesai</p>
@@ -164,7 +166,6 @@
                 </div>
             </div>
 
-            <!-- Overdue Tasks Card -->
             <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Terlewat (Overdue)</p>
@@ -191,23 +192,18 @@
 
         <!-- Filter, Search, & Sorting Toolbar -->
         <section class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-3">
-            <!-- Top Search Input -->
             <div class="relative">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400"></i>
                 <input type="text" id="searchInput" oninput="renderApp()" placeholder="Cari judul tugas, mata kuliah, atau kata kunci..." class="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all">
             </div>
 
-            <!-- Filter Controls Grid -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-                <!-- Filter Matkul -->
                 <div>
                     <label class="block font-semibold text-slate-500 dark:text-slate-400 mb-1">Mata Kuliah</label>
                     <select id="filterCourse" onchange="renderApp()" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none font-medium">
                         <option value="Semua">Semua Matkul</option>
                     </select>
                 </div>
-
-                <!-- Filter Prioritas -->
                 <div>
                     <label class="block font-semibold text-slate-500 dark:text-slate-400 mb-1">Prioritas</label>
                     <select id="filterPriority" onchange="renderApp()" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none font-medium">
@@ -217,8 +213,6 @@
                         <option value="Rendah">☕ Rendah</option>
                     </select>
                 </div>
-
-                <!-- Filter Tipe Tugas -->
                 <div>
                     <label class="block font-semibold text-slate-500 dark:text-slate-400 mb-1">Tipe Tugas</label>
                     <select id="filterType" onchange="renderApp()" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none font-medium">
@@ -227,8 +221,6 @@
                         <option value="Kelompok">👥 Kelompok</option>
                     </select>
                 </div>
-
-                <!-- Urutkan (Sorting) -->
                 <div>
                     <label class="block font-semibold text-slate-500 dark:text-slate-400 mb-1">Urutkan</label>
                     <select id="sortBy" onchange="renderApp()" class="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none font-medium">
@@ -257,9 +249,7 @@
                     </span>
                     <span id="kanbanCountToDo" class="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md font-bold">0</span>
                 </div>
-                <div id="kanbanColToDo" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" ondragover="allowDrop(event)" ondrop="dropTask(event, 'Belum Mulai')">
-                    <!-- Kanban task cards -->
-                </div>
+                <div id="kanbanColToDo" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" ondragover="allowDrop(event)" ondrop="dropTask(event, 'Belum Mulai')"></div>
             </div>
 
             <!-- Column 2: Sedang Dikerjakan -->
@@ -270,9 +260,7 @@
                     </span>
                     <span id="kanbanCountInProgress" class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-md font-bold">0</span>
                 </div>
-                <div id="kanbanColInProgress" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" ondragover="allowDrop(event)" ondrop="dropTask(event, 'Dikerjakan')">
-                    <!-- Kanban task cards -->
-                </div>
+                <div id="kanbanColInProgress" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" ondragover="allowDrop(event)" ondrop="dropTask(event, 'Dikerjakan')"></div>
             </div>
 
             <!-- Column 3: Selesai -->
@@ -283,15 +271,12 @@
                     </span>
                     <span id="kanbanCountDone" class="text-xs bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 px-2 py-0.5 rounded-md font-bold">0</span>
                 </div>
-                <div id="kanbanColDone" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" ondragover="allowDrop(event)" ondrop="dropTask(event, 'Selesai')">
-                    <!-- Kanban task cards -->
-                </div>
+                <div id="kanbanColDone" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" ondragover="allowDrop(event)" ondrop="dropTask(event, 'Selesai')"></div>
             </div>
         </section>
 
         <!-- VIEW 3: Calendar View Container -->
         <section id="viewContainerCalendar" class="hidden bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-sm space-y-4">
-            <!-- Calendar Navigation Header -->
             <div class="flex items-center justify-between">
                 <h3 id="calendarMonthYear" class="text-lg font-extrabold text-slate-800 dark:text-white">Maret 2026</h3>
                 <div class="flex items-center gap-2">
@@ -304,21 +289,14 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Days of Week Header -->
             <div class="grid grid-cols-7 text-center text-xs font-bold text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-2">
                 <div>Min</div><div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div>Sab</div>
             </div>
-
-            <!-- Calendar Days Grid -->
-            <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs">
-                <!-- Day cells dynamically rendered -->
-            </div>
+            <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-xs"></div>
         </section>
-
     </main>
 
-    <!-- Task Form Modal (Add / Edit Task) -->
+    <!-- Task Form Modal -->
     <div id="taskModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4 relative my-8 my-auto">
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
@@ -329,12 +307,8 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-
-            <!-- Form Content -->
             <form id="taskForm" onsubmit="handleFormSubmit(event)" class="space-y-4 text-xs sm:text-sm">
                 <input type="hidden" id="taskId">
-
-                <!-- Row 1: Course & Color -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="sm:col-span-2">
                         <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Nama Mata Kuliah *</label>
@@ -348,20 +322,14 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Row 2: Title -->
                 <div>
                     <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Judul Tugas *</label>
                     <input type="text" id="formTitle" required placeholder="Contoh: Laporan Akhir Sistem Informasi" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
-
-                <!-- Row 3: Description -->
                 <div>
                     <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Deskripsi / Detail Instruksi</label>
                     <textarea id="formDesc" rows="3" placeholder="Instruksi pengerjaan, format penulisan, atau catatan penting..." class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 custom-scrollbar"></textarea>
                 </div>
-
-                <!-- Row 4: Type, Priority, Status -->
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Tipe Tugas</label>
@@ -387,8 +355,6 @@
                         </select>
                     </div>
                 </div>
-
-                <!-- Row 5: Dates & Time -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Tgl Diberikan</label>
@@ -403,8 +369,6 @@
                         <input type="time" id="formDueTime" value="23:59" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
                     </div>
                 </div>
-
-                <!-- Row 6: Reference Attachment URL -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Link Lampiran / URL</label>
@@ -415,8 +379,6 @@
                         <input type="text" id="formRefLabel" placeholder="Contoh: Modul PDF / Classroom" class="w-full p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </div>
-
-                <!-- Row 7: Subtasks Checklist Builder -->
                 <div class="space-y-2 border-t border-slate-100 dark:border-slate-700 pt-3">
                     <label class="block font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
                         <span>Sub-Tugas (Checklist Pengerjaan)</span>
@@ -424,12 +386,8 @@
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah Sub-tugas
                         </button>
                     </label>
-                    <div id="subtaskInputsContainer" class="space-y-2 max-h-36 overflow-y-auto custom-scrollbar">
-                        <!-- Dynamic subtask rows -->
-                    </div>
+                    <div id="subtaskInputsContainer" class="space-y-2 max-h-36 overflow-y-auto custom-scrollbar"></div>
                 </div>
-
-                <!-- Modal Actions -->
                 <div class="flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-700 pt-4">
                     <button type="button" onclick="closeTaskModal()" class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200">
                         Batal
@@ -453,18 +411,14 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-
             <div class="space-y-3 text-xs sm:text-sm">
-                <!-- Export JSON -->
                 <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-between">
                     <div>
                         <p class="font-bold text-slate-800 dark:text-slate-200">Ekspor File JSON</p>
-                        <p class="text-xs text-slate-400">Cadangkan seluruh data tugas ke file</p>
+                        <p class="text-xs text-slate-400">Cadangkan data tugas ke file komputer</p>
                     </div>
                     <button onclick="exportDataJSON()" class="px-3 py-1.5 bg-brand-600 text-white font-bold rounded-lg text-xs hover:bg-brand-700">Ekspor</button>
                 </div>
-
-                <!-- Export CSV -->
                 <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-between">
                     <div>
                         <p class="font-bold text-slate-800 dark:text-slate-200">Ekspor File CSV (Excel)</p>
@@ -472,106 +426,51 @@
                     </div>
                     <button onclick="exportDataCSV()" class="px-3 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-xs hover:bg-emerald-700">CSV</button>
                 </div>
-
-                <!-- Import JSON -->
                 <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl space-y-2">
                     <div>
-                        <p class="font-bold text-slate-800 dark:text-slate-200">Impor Data dari JSON</p>
-                        <p class="text-xs text-slate-400">Pulihkan data tugas dari file cadangan</p>
+                        <p class="font-bold text-slate-800 dark:text-slate-200">Impor Data JSON ke Cloud</p>
+                        <p class="text-xs text-slate-400">Pulihkan data dan unggah ke Firestore</p>
                     </div>
                     <input type="file" id="importFileInput" accept=".json" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
                     <button onclick="importDataJSON()" class="w-full py-1.5 bg-slate-700 text-white font-bold rounded-lg text-xs hover:bg-slate-800">Proses Impor</button>
                 </div>
-
-                <!-- Reset Data -->
                 <div class="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-xl space-y-2">
-                    <p class="font-bold text-rose-800 dark:text-rose-300">Hapus / Reset Semua Data</p>
-                    <p class="text-xs text-rose-600 dark:text-rose-400">Tindakan ini akan menghapus seluruh catatan tugas dari browser secara permanen.</p>
-                    <button onclick="resetAllData()" class="w-full py-1.5 bg-rose-600 text-white font-bold rounded-lg text-xs hover:bg-rose-700">Hapus Semua Data</button>
+                    <p class="font-bold text-rose-800 dark:text-rose-300">Hapus / Reset Semua Data Cloud</p>
+                    <p class="text-xs text-rose-600 dark:text-rose-400">Tindakan ini akan menghapus seluruh catatan tugas dari database Firestore secara permanen.</p>
+                    <button onclick="resetAllData()" class="w-full py-1.5 bg-rose-600 text-white font-bold rounded-lg text-xs hover:bg-rose-700">Hapus Semua Data Cloud</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const STORAGE_KEY = 'taskedu_tasks_data';
         const THEME_KEY = 'taskedu_theme';
         let tasks = [];
         let currentView = 'list';
         let calendarDate = new Date();
 
-        // Sample initial data if storage is completely empty
-        const sampleTasks = [
-            {
-                id: 'task_1',
-                course: 'Pemrograman Web',
-                courseColor: '#6366f1',
-                title: 'Project Akhir E-Commerce REST API',
-                desc: 'Membuat backend menggunakan Node.js dan frontend Tailwind CSS. Wajib include sertifikasi autentikasi JWT.',
-                type: 'Kelompok',
-                priority: 'Tinggi',
-                status: 'Dikerjakan',
-                startDate: getOffsetDate(-3),
-                dueDate: getOffsetDate(2),
-                dueTime: '23:59',
-                refUrl: 'https://github.com',
-                refLabel: 'Repo GitHub Tim',
-                subtasks: [
-                    { id: 'st_1', title: 'Perancangan Database ERD', completed: true },
-                    { id: 'st_2', title: 'Membuat Endpoint Auth API', completed: true },
-                    { id: 'st_3', title: 'Integrasi Payment Gateway', completed: false }
-                ],
-                createdAt: Date.now() - 86400000 * 3
-            },
-            {
-                id: 'task_2',
-                course: 'Sistem Basis Data',
-                courseColor: '#059669',
-                title: 'Kuis Normalisasi Database & Indexing',
-                desc: 'Mempelajari bentuk Normalisasi 1NF hingga 3NF serta optimasi query SQL.',
-                type: 'Individu',
-                priority: 'Sedang',
-                status: 'Belum Mulai',
-                startDate: getOffsetDate(-1),
-                dueDate: getOffsetDate(5),
-                dueTime: '10:00',
-                refUrl: 'https://classroom.google.com',
-                refLabel: 'Slide Materi Kuliah',
-                subtasks: [
-                    { id: 'st_4', title: 'Membaca Bab 4 Buku Silberschatz', completed: false }
-                ],
-                createdAt: Date.now() - 86400000
-            },
-            {
-                id: 'task_3',
-                course: 'Kalkulus Lanjut',
-                courseColor: '#dc2626',
-                title: 'Tugas Latihan Integral Lipat Tiga',
-                desc: 'Kerjakan Soal No 1-15 di buku paket halaman 120.',
-                type: 'Individu',
-                priority: 'Rendah',
-                status: 'Selesai',
-                startDate: getOffsetDate(-5),
-                dueDate: getOffsetDate(-1),
-                dueTime: '23:59',
-                refUrl: '',
-                refLabel: '',
-                subtasks: [],
-                createdAt: Date.now() - 86400000 * 5
-            }
-        ];
-
-        function getOffsetDate(daysOffset) {
-            const d = new Date();
-            d.setDate(d.getDate() + daysOffset);
-            return d.toISOString().split('T')[0];
+        // --- KONFIGURASI FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "API_KEY_ANDA",
+            authDomain: "DOMAIN_ANDA.firebaseapp.com",
+            projectId: "PROJECT_ID_ANDA",
+            storageBucket: "PROJECT_ID_ANDA.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+        
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
+        const db = firebase.firestore();
+        const tasksCollection = db.collection('tasks');
+        // ----------------------------
 
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
-            loadTasks();
-            renderApp();
-            lucide.createIcons();
+            loadTasks(); 
+            // renderApp dipanggil secara otomatis di dalam loadTasks (via onSnapshot)
         });
 
         function initTheme() {
@@ -592,28 +491,24 @@
             lucide.createIcons();
         }
 
+        // --- INTEGRASI REAL-TIME CLOUD (MENGGANTIKAN LOCAL STORAGE) ---
         function loadTasks() {
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (data) {
-                try {
-                    tasks = JSON.parse(data);
-                } catch (e) {
-                    tasks = sampleTasks;
-                }
-            } else {
-                tasks = sampleTasks;
-                saveTasks();
-            }
-        }
-
-        function saveTasks() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+            tasksCollection.onSnapshot((snapshot) => {
+                tasks = [];
+                snapshot.forEach((doc) => {
+                    tasks.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                renderApp(); 
+            }, (error) => {
+                console.error("Error fetching tasks from Firestore: ", error);
+            });
         }
 
         function switchView(viewName) {
             currentView = viewName;
-
-            // Reset navigation active styles
             ['list', 'kanban', 'calendar'].forEach(v => {
                 const btn = document.getElementById(`nav-view-${v}`);
                 const mBtn = document.getElementById(`m-nav-${v}`);
@@ -633,7 +528,6 @@
                     container?.classList.add('hidden');
                 }
             });
-
             renderApp();
         }
 
@@ -655,7 +549,6 @@
                 return matchSearch && matchCourse && matchPriority && matchType;
             });
 
-            // Sorting logic
             result.sort((a, b) => {
                 if (sortBy === 'deadline') {
                     if (!a.dueDate) return 1;
@@ -722,7 +615,6 @@
             document.getElementById('progressPercent').textContent = `${percent}%`;
             document.getElementById('progressBar').style.width = `${percent}%`;
 
-            // Urgency Banner Logic
             const urgentTasks = tasks.filter(t => {
                 if (t.status === 'Selesai' || !t.dueDate) return false;
                 const diffDays = Math.ceil((new Date(t.dueDate) - new Date()) / (1000 * 60 * 60 * 24));
@@ -765,7 +657,6 @@
 
                 card.innerHTML = `
                     <div class="space-y-2">
-                        <!-- Card Header Tags -->
                         <div class="flex items-center justify-between gap-2 flex-wrap">
                             <span class="px-2.5 py-1 text-xs font-bold rounded-lg text-white shadow-sm flex items-center gap-1.5" style="background-color: ${task.courseColor || '#6366f1'}">
                                 <i data-lucide="book-open" class="w-3 h-3"></i> ${escapeHtml(task.course)}
@@ -780,13 +671,11 @@
                             </div>
                         </div>
 
-                        <!-- Task Title & Description -->
                         <h4 class="font-extrabold text-base text-slate-900 dark:text-white leading-snug ${task.status === 'Selesai' ? 'line-through text-slate-400 dark:text-slate-500' : ''}">
                             ${escapeHtml(task.title)}
                         </h4>
                         ${task.desc ? `<p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">${escapeHtml(task.desc)}</p>` : ''}
 
-                        <!-- Subtasks Progress Bar if available -->
                         ${subtasksCount > 0 ? `
                             <div class="pt-1 space-y-1">
                                 <div class="flex justify-between text-[11px] font-semibold text-slate-500">
@@ -807,7 +696,6 @@
                             </div>
                         ` : ''}
 
-                        <!-- Link Attachment if provided -->
                         ${task.refUrl ? `
                             <div class="pt-1">
                                 <a href="${escapeHtml(task.refUrl)}" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline">
@@ -817,7 +705,6 @@
                         ` : ''}
                     </div>
 
-                    <!-- Footer Details & Actions -->
                     <div class="pt-3 border-t border-slate-100 dark:border-slate-700/80 flex items-center justify-between gap-2 text-xs text-slate-500">
                         <div class="space-y-0.5">
                             <p class="flex items-center gap-1">
@@ -826,7 +713,6 @@
                             </p>
                         </div>
 
-                        <!-- Actions Dropdown & Quick Toggle -->
                         <div class="flex items-center gap-1.5">
                             <select onchange="updateTaskStatus('${task.id}', this.value)" class="p-1.5 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-lg text-xs outline-none">
                                 <option value="Belum Mulai" ${task.status === 'Belum Mulai' ? 'selected' : ''}>Belum</option>
@@ -918,7 +804,6 @@
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
 
-            // Blank cells before month starts
             for (let i = 0; i < firstDayIndex; i++) {
                 const empty = document.createElement('div');
                 empty.className = "h-20 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl";
@@ -964,43 +849,50 @@
             lucide.createIcons();
         }
 
+        // --- UPDATE STATUS KE FIRESTORE ---
         function updateTaskStatus(taskId, newStatus) {
             const task = tasks.find(t => t.id === taskId);
             if (task) {
                 const prevStatus = task.status;
-                task.status = newStatus;
-                saveTasks();
-                renderApp();
-
-                if (newStatus === 'Selesai' && prevStatus !== 'Selesai') {
-                    triggerConfetti();
-                }
+                tasksCollection.doc(taskId).update({ status: newStatus })
+                    .then(() => {
+                        if (newStatus === 'Selesai' && prevStatus !== 'Selesai') {
+                            triggerConfetti();
+                        }
+                    })
+                    .catch(err => console.error("Gagal mengubah status: ", err));
             }
         }
 
+        // --- UPDATE SUBTASK KE FIRESTORE ---
         function toggleSubtask(taskId, subtaskId) {
             const task = tasks.find(t => t.id === taskId);
             if (task && task.subtasks) {
                 const st = task.subtasks.find(s => s.id === subtaskId);
                 if (st) {
-                    st.completed = !st.completed;
+                    const updatedSubtasks = task.subtasks.map(s => 
+                        s.id === subtaskId ? { ...s, completed: !s.completed } : s
+                    );
                     
-                    // Check if all subtasks completed
-                    if (task.subtasks.every(s => s.completed) && task.status !== 'Selesai') {
-                        task.status = 'Selesai';
+                    let newStatus = task.status;
+                    if (updatedSubtasks.every(s => s.completed) && task.status !== 'Selesai') {
+                        newStatus = 'Selesai';
                         triggerConfetti();
                     }
-                    saveTasks();
-                    renderApp();
+                    
+                    tasksCollection.doc(taskId).update({
+                        subtasks: updatedSubtasks,
+                        status: newStatus
+                    }).catch(err => console.error("Gagal memperbarui subtask: ", err));
                 }
             }
         }
 
+        // --- DELETE DARI FIRESTORE ---
         function deleteTask(taskId) {
-            if (confirm("Apakah Anda yakin ingin menghapus catatan tugas ini?")) {
-                tasks = tasks.filter(t => t.id !== taskId);
-                saveTasks();
-                renderApp();
+            if (confirm("Apakah Anda yakin ingin menghapus catatan tugas ini dari Cloud?")) {
+                tasksCollection.doc(taskId).delete()
+                    .catch(err => console.error("Gagal menghapus tugas: ", err));
             }
         }
 
@@ -1072,11 +964,11 @@
             lucide.createIcons();
         }
 
+        // --- SIMPAN KE FIRESTORE ---
         function handleFormSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('taskId').value;
 
-            // Collect subtasks
             const subtaskRows = document.querySelectorAll('#subtaskInputsContainer > div');
             const subtasks = [];
             subtaskRows.forEach((row, index) => {
@@ -1105,16 +997,12 @@
                 createdAt: id ? (tasks.find(t => t.id === id)?.createdAt || Date.now()) : Date.now()
             };
 
-            if (id) {
-                const index = tasks.findIndex(t => t.id === id);
-                if (index !== -1) tasks[index] = taskData;
-            } else {
-                tasks.push(taskData);
-            }
-
-            saveTasks();
-            closeTaskModal();
-            renderApp();
+            // Simpan / Update ke Cloud
+            tasksCollection.doc(taskData.id).set(taskData)
+                .then(() => {
+                    closeTaskModal();
+                })
+                .catch((error) => console.error("Gagal menyimpan tugas ke Cloud: ", error));
         }
 
         function openDataModal() {
@@ -1153,6 +1041,7 @@
             a.click();
         }
 
+        // --- IMPOR MASAL KE FIRESTORE (BATCH) ---
         function importDataJSON() {
             const fileInput = document.getElementById('importFileInput');
             const file = fileInput.files[0];
@@ -1166,11 +1055,16 @@
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (Array.isArray(imported)) {
-                        tasks = imported;
-                        saveTasks();
-                        renderApp();
-                        closeDataModal();
-                        alert("Data berhasil dipulihkan!");
+                        const batch = db.batch();
+                        imported.forEach(task => {
+                            const docRef = tasksCollection.doc(task.id);
+                            batch.set(docRef, task);
+                        });
+                        
+                        batch.commit().then(() => {
+                            closeDataModal();
+                            alert("Data berhasil diunggah ke Firebase Cloud!");
+                        }).catch(err => alert("Gagal mengunggah data: " + err.message));
                     } else {
                         alert("Format file JSON tidak valid.");
                     }
@@ -1181,12 +1075,19 @@
             reader.readAsText(file);
         }
 
+        // --- HAPUS SEMUA DATA DARI CLOUD (BATCH DELETE) ---
         function resetAllData() {
-            if (confirm("PERINGATAN: Seluruh catatan tugas akan dihapus secara permanen. Lanjutkan?")) {
-                tasks = [];
-                saveTasks();
-                renderApp();
-                closeDataModal();
+            if (confirm("PERINGATAN: Seluruh catatan tugas akan dihapus secara permanen DARI CLOUD. Lanjutkan?")) {
+                tasksCollection.get().then((snapshot) => {
+                    const batch = db.batch();
+                    snapshot.docs.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    return batch.commit();
+                }).then(() => {
+                    closeDataModal();
+                    alert("Seluruh data Cloud telah dibersihkan.");
+                }).catch(err => console.error("Gagal menghapus data Cloud: ", err));
             }
         }
 
