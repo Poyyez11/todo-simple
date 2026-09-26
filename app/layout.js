@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Task Tracker Pro',
+  title: 'Task Tracker',
   description: 'Manajemen tugas kuliah dan proyek',
   manifest: '/manifest.json', 
   themeColor: '#0f172a',      
