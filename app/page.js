@@ -58,6 +58,16 @@ export default async function Page({ searchParams }) {
   if (!currentUser) {
     const isRegister = resolvedParams?.auth === 'register';
 
+    // Fungsi untuk memproses Login / Register
+    async function handleAuth(formData) {
+      'use server';
+      const username = formData.get('username');
+      if (username) {
+        const cStore = await cookies();
+        cStore.set('task_tracker_user', username, { path: '/', maxAge: 60 * 60 * 24 * 30 }); // Sesi 30 hari
+      }
+    }
+
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
         <div style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '40px', borderRadius: '20px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)' }}>
@@ -85,7 +95,6 @@ export default async function Page({ searchParams }) {
             </button>
           </form>
           
-          {/* Tombol bolak-balik Login/Register */}
           <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px' }}>
              {isRegister ? (
                <a href="/" style={{ color: '#818cf8', textDecoration: 'none' }}>Sudah punya akun? Login di sini</a>
@@ -93,16 +102,6 @@ export default async function Page({ searchParams }) {
                <a href="/?auth=register" style={{ color: '#818cf8', textDecoration: 'none' }}>Belum punya akun? Daftar di sini</a>
              )}
           </div>
-        </div>
-      </div>
-    );
-              <label style={{ color: '#cbd5e1', fontSize: '12px' }}>Password</label>
-              <input type="password" name="password" required style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)' }} />
-            </div>
-            <button type="submit" style={{ padding: '14px', background: 'linear-gradient(to right, #4f46e5, #7c3aed)', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>
-              {isRegister ? 'Daftar' : 'Masuk'}
-            </button>
-          </form>
         </div>
       </div>
     );
