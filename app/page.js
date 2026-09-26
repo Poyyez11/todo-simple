@@ -62,50 +62,49 @@ export default async function Page({ searchParams }) {
     async function handleAuth(formData) {
       'use server';
       const username = formData.get('username');
-      if (username) {
-        const cStore = await cookies();
-        cStore.set('task_tracker_user', username, { path: '/', maxAge: 60 * 60 * 24 * 30 }); // Sesi 30 hari
+      const password = formData.get('password');
+      const actionType = formData.get('actionType'); // Mengambil tipe form: 'register' atau 'login'
+
+      if (username && password) {
+        const dbClient = new Redis(process.env.STORAGE_REDIS_URL);
+        const userKey = `user:${username}`;
+
+        if (actionType === 'register') {
+          // PROSES REGISTER
+          // Cek apakah username sudah ada
+          const existingUser = await dbClient.get(userKey);
+          
+          if (existingUser) {
+            // Jika sudah ada, jangan izinkan daftar lagi
+            // Idealnya kita menampilkan pesan error, tapi untuk kemudahan
+            // kita arahkan saja kembali ke halaman register
+             return; 
+          } else {
+             // Jika belum ada, simpan username dan password ke Redis
+             await dbClient.set(userKey, password);
+             
+             // Setelah berhasil daftar, langsung login (set cookie)
+             const cStore = await cookies();
+             cStore.set('task_tracker_user', username, { path: '/', maxAge: 60 * 60 * 24 * 30 });
+          }
+        } else if (actionType === 'login') {
+          // PROSES LOGIN
+          // Ambil password yang tersimpan di Redis untuk username tersebut
+          const storedPassword = await dbClient.get(userKey);
+
+          // Cek apakah user ada DAN passwordnya cocok
+          if (storedPassword && storedPassword === password) {
+            // Jika cocok, set cookie untuk login
+            const cStore = await cookies();
+            cStore.set('task_tracker_user', username, { path: '/', maxAge: 60 * 60 * 24 * 30 });
+          } else {
+            // Jika salah (username tidak ada atau password salah)
+            // Sistem tidak akan mengeset cookie, jadi tidak akan masuk
+            return;
+          }
+        }
       }
     }
-
-    return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
-        <div style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '40px', borderRadius: '20px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)' }}>
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', background: 'linear-gradient(to right, #818cf8, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              ⚡ Task Tracker Pro
-            </h1>
-            <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
-              {isRegister ? 'Buat akun privat Anda' : 'Masuk ke workspace Anda'}
-            </p>
-          </div>
-
-          <form action={handleAuth} style={{ display: 'grid', gap: '15px' }}>
-            <input type="hidden" name="actionType" value={isRegister ? 'register' : 'login'} />
-            <div>
-              <label style={{ color: '#cbd5e1', fontSize: '12px' }}>Username</label>
-              <input type="text" name="username" required style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)' }} />
-            </div>
-            <div>
-              <label style={{ color: '#cbd5e1', fontSize: '12px' }}>Password</label>
-              <input type="password" name="password" required style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)' }} />
-            </div>
-            <button type="submit" style={{ padding: '14px', background: 'linear-gradient(to right, #4f46e5, #7c3aed)', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>
-              {isRegister ? 'Daftar' : 'Masuk'}
-            </button>
-          </form>
-          
-          <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px' }}>
-             {isRegister ? (
-               <a href="/" style={{ color: '#818cf8', textDecoration: 'none' }}>Sudah punya akun? Login di sini</a>
-             ) : (
-               <a href="/?auth=register" style={{ color: '#818cf8', textDecoration: 'none' }}>Belum punya akun? Daftar di sini</a>
-             )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Pengambilan Data
   const redisKey = `todos:${currentUser}`;
