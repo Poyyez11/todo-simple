@@ -56,29 +56,6 @@ export default async function Page({ searchParams }) {
 
   // Autentikasi
   if (!currentUser) {
-    async function handleAuth(formData) {
-      'use server';
-      const actionType = formData.get('actionType');
-      const username = formData.get('username')?.trim();
-      const password = formData.get('password')?.trim();
-
-      if (!username || !password) return;
-
-      const dbClient = new Redis(process.env.STORAGE_REDIS_URL);
-      const storedPass = await dbClient.hget('users:map', username);
-
-      if (actionType === 'register') {
-        if (storedPass) return;
-        await dbClient.hset('users:map', username, password);
-      } else {
-        if (!storedPass || storedPass !== password) return;
-      }
-
-      const cStore = await cookies();
-      cStore.set('task_tracker_user', username, { path: '/', maxAge: 60 * 60 * 24 * 7 });
-      revalidatePath('/');
-    }
-
     const isRegister = resolvedParams?.auth === 'register';
 
     return (
@@ -88,7 +65,11 @@ export default async function Page({ searchParams }) {
             <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', background: 'linear-gradient(to right, #818cf8, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               ⚡ Task Tracker Pro
             </h1>
+            <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
+              {isRegister ? 'Buat akun privat Anda' : 'Masuk ke workspace Anda'}
+            </p>
           </div>
+
           <form action={handleAuth} style={{ display: 'grid', gap: '15px' }}>
             <input type="hidden" name="actionType" value={isRegister ? 'register' : 'login'} />
             <div>
@@ -96,6 +77,25 @@ export default async function Page({ searchParams }) {
               <input type="text" name="username" required style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)' }} />
             </div>
             <div>
+              <label style={{ color: '#cbd5e1', fontSize: '12px' }}>Password</label>
+              <input type="password" name="password" required style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)' }} />
+            </div>
+            <button type="submit" style={{ padding: '14px', background: 'linear-gradient(to right, #4f46e5, #7c3aed)', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>
+              {isRegister ? 'Daftar' : 'Masuk'}
+            </button>
+          </form>
+          
+          {/* Tombol bolak-balik Login/Register */}
+          <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px' }}>
+             {isRegister ? (
+               <a href="/" style={{ color: '#818cf8', textDecoration: 'none' }}>Sudah punya akun? Login di sini</a>
+             ) : (
+               <a href="/?auth=register" style={{ color: '#818cf8', textDecoration: 'none' }}>Belum punya akun? Daftar di sini</a>
+             )}
+          </div>
+        </div>
+      </div>
+    );
               <label style={{ color: '#cbd5e1', fontSize: '12px' }}>Password</label>
               <input type="password" name="password" required style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)' }} />
             </div>
